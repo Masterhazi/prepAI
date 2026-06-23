@@ -2,7 +2,7 @@ name: Build PrepAI (Tauri)
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -86,6 +86,10 @@ jobs:
         with:
           node-version: 20
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Download sidecar binary
         uses: actions/download-artifact@v4
         with:
@@ -95,6 +99,11 @@ jobs:
       - name: Make sidecar executable (Unix)
         if: matrix.os != 'windows-latest'
         run: chmod +x src-tauri/binaries/*
+
+      - name: Generate all required Tauri icon sizes
+        run: |
+          pip install pillow --quiet
+          python3 scripts/gen_icons.py
 
       - name: Install npm deps
         run: npm install
