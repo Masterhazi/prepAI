@@ -136,3 +136,4 @@ fn kill_sidecar(app: &tauri::AppHandle) {
         let _ = child.kill();
     }
 }
+
