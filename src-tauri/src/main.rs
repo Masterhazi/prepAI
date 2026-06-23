@@ -19,7 +19,6 @@ use tauri_plugin_shell::{process::CommandEvent, ShellExt};
 
 struct SidecarHandle(Mutex<Option<tauri_plugin_shell::process::CommandChild>>);
 
-const BACKEND_PORT: u16 = 5000;
 const BACKEND_URL: &str = "http://127.0.0.1:5000";
 
 fn main() {
