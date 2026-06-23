@@ -1,26 +1,31 @@
 """
-scripts/gen_icons.py — Generate all icon sizes required by Tauri.
+scripts/gen_icons.py - Generate all icon sizes required by Tauri.
 
 Tauri requires these exact files in src-tauri/icons/:
-  32x32.png          — Windows taskbar, small
-  128x128.png        — Windows/Linux app icon
-  128x128@2x.png     — macOS retina (256x256 pixels, named @2x)
-  icon.ico           — Windows .exe icon (multi-size)
-  icon.icns          — macOS .app icon (multi-size)
-  icon.png           — Tray icon source
+  32x32.png         - Windows taskbar, small
+  128x128.png       - Windows/Linux app icon
+  128x128@2x.png    - macOS retina (256x256 pixels, named @2x)
+  icon.ico          - Windows .exe icon (multi-size)
+  icon.icns         - macOS .app icon (multi-size)
+  icon.png          - source (already present, tray icon)
 
-Run from repo root:  python3 scripts/gen_icons.py
+Run from repo root: python3 scripts/gen_icons.py
 """
 
+import sys
 import os
 import struct
-import zlib
+import io
 from pathlib import Path
+
+# Force UTF-8 so Unicode in filenames/paths does not crash on Windows cp1252
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 try:
     from PIL import Image
 except ImportError:
-    import subprocess, sys
+    import subprocess
     subprocess.check_call([sys.executable, "-m", "pip", "install", "pillow", "--quiet"])
     from PIL import Image
 
@@ -28,30 +33,18 @@ ICONS_DIR = Path("src-tauri/icons")
 SOURCE    = ICONS_DIR / "icon.png"
 
 
-def make_png_bytes(img: Image.Image, size: int) -> bytes:
-    """Resize image and return raw PNG bytes."""
-    import io
-    buf = io.BytesIO()
-    img.resize((size, size), Image.LANCZOS).save(buf, format="PNG")
-    return buf.getvalue()
-
-
-def write_ico(img: Image.Image, path: Path):
-    """Write a proper multi-size .ico file."""
-    import io
+def write_ico(img, path):
+    """Write a proper multi-size .ico file (no Pillow ICO bugs)."""
     sizes = [16, 24, 32, 48, 64, 128, 256]
     images = []
     for sz in sizes:
         buf = io.BytesIO()
-        resized = img.resize((sz, sz), Image.LANCZOS)
-        resized.save(buf, format="PNG")
+        img.resize((sz, sz), Image.LANCZOS).save(buf, format="PNG")
         images.append((sz, buf.getvalue()))
 
-    # ICO header
     num = len(images)
-    header = struct.pack("<HHH", 0, 1, num)  # reserved, type=1(icon), count
+    header = struct.pack("<HHH", 0, 1, num)
 
-    # Directory entries (each 16 bytes)
     offset = 6 + num * 16
     directory = b""
     for sz, data in images:
@@ -66,11 +59,9 @@ def write_ico(img: Image.Image, path: Path):
             f.write(data)
 
 
-def write_icns(img: Image.Image, path: Path):
+def write_icns(img, path):
     """Write a proper .icns file for macOS."""
-    import io
-
-    # ICNS type codes → pixel sizes
+    # ICNS type codes -> pixel sizes
     types = [
         (b"icp4", 16),
         (b"icp5", 32),
@@ -78,20 +69,12 @@ def write_icns(img: Image.Image, path: Path):
         (b"ic07", 128),
         (b"ic08", 256),
         (b"ic09", 512),
-        (b"ic10", 1024),
-        (b"ic11", 32),   # @2x of 16
-        (b"ic12", 64),   # @2x of 32
-        (b"ic13", 256),  # @2x of 128
-        (b"ic14", 512),  # @2x of 256
     ]
 
     chunks = b""
     for type_code, size in types:
-        if size > max(img.size):
-            # Don't upscale beyond source resolution
-            resized = img.resize((max(img.size), max(img.size)), Image.LANCZOS)
-        else:
-            resized = img.resize((size, size), Image.LANCZOS)
+        target_size = min(size, max(img.size))
+        resized = img.resize((target_size, target_size), Image.LANCZOS)
         buf = io.BytesIO()
         resized.save(buf, format="PNG")
         data = buf.getvalue()
@@ -105,34 +88,37 @@ def write_icns(img: Image.Image, path: Path):
 
 def main():
     if not SOURCE.exists():
-        print(f"ERROR: source icon not found at {SOURCE}")
-        raise SystemExit(1)
+        print("ERROR: source icon not found at " + str(SOURCE))
+        sys.exit(1)
 
-    img = Image.open(SOURCE).convert("RGBA")
-    print(f"Source: {SOURCE} ({img.size[0]}x{img.size[1]})")
+    img = Image.open(str(SOURCE)).convert("RGBA")
+    print("Source: " + str(SOURCE) + " (" + str(img.size[0]) + "x" + str(img.size[1]) + ")")
 
     ICONS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ── PNG sizes ──────────────────────────────────────────────────────────────
-    png_targets = {
-        "32x32.png":       32,
-        "128x128.png":     128,
-        "128x128@2x.png":  256,   # This is the one that was missing
-    }
-    for name, size in png_targets.items():
+    # PNG sizes
+    png_targets = [
+        ("32x32.png",      32),
+        ("128x128.png",    128),
+        ("128x128@2x.png", 256),   # This was the missing one
+    ]
+    for name, size in png_targets:
         out = ICONS_DIR / name
-        img.resize((size, size), Image.LANCZOS).save(out, format="PNG")
-        print(f"  ✓ {out}")
+        img.resize((size, size), Image.LANCZOS).save(str(out), format="PNG")
+        print("[OK] " + str(out))
 
-    # ── icon.ico (Windows) ─────────────────────────────────────────────────────
-    write_ico(img, ICONS_DIR / "icon.ico")
-    print(f"  ✓ {ICONS_DIR}/icon.ico  (multi-size: 16,24,32,48,64,128,256)")
+    # icon.ico for Windows
+    ico_path = ICONS_DIR / "icon.ico"
+    write_ico(img, ico_path)
+    print("[OK] " + str(ico_path) + " (16,24,32,48,64,128,256)")
 
-    # ── icon.icns (macOS) ──────────────────────────────────────────────────────
-    write_icns(img, ICONS_DIR / "icon.icns")
-    print(f"  ✓ {ICONS_DIR}/icon.icns  (multi-size: 16–1024)")
+    # icon.icns for macOS
+    icns_path = ICONS_DIR / "icon.icns"
+    write_icns(img, icns_path)
+    print("[OK] " + str(icns_path) + " (16,32,64,128,256,512)")
 
-    print("\nAll icons generated successfully.")
+    print("")
+    print("All icons generated successfully.")
 
 
 if __name__ == "__main__":
