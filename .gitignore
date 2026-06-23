@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/binaries/*
+!src-tauri/binaries/.gitkeep
+
+# Node
+node_modules/
+
+# Local data
+*.db
+.prepai/
+
+# OS
+.DS_Store
+Thumbs.db

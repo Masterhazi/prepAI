@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>PrepAI</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#1c1c1a}
+:root{
+  --bg:#1c1c1a;--bg2:#232321;--bg3:#2b2b29;--bg4:#333331;
+  --text:#f0ede8;--text2:#9a9a96;--text3:#585855;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --teal:#1D9E75;--teal-bg:rgba(29,158,117,.13);--teal-text:#5DCAA5;
+  --blue:#378ADD;--blue-bg:rgba(55,138,221,.13);--blue-text:#85B7EB;
+  --red:#D85A30;--red-bg:rgba(216,90,48,.13);--red-text:#F0997B;
+  --amber-bg:rgba(239,159,39,.13);--amber-text:#FAC775;
+  --purple-bg:rgba(175,169,236,.1);--purple-text:#AFA9EC;
+  --r:7px;--rl:10px;
+  --font:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --ease:cubic-bezier(.4,0,.2,1);--eout:cubic-bezier(0,0,.2,1);
+  --fast:110ms;--mid:190ms;--slow:270ms;
+}
+body{font-family:var(--font);color:var(--text);font-size:13px;
+     display:grid;grid-template-columns:196px 1fr;
+     -webkit-font-smoothing:antialiased;text-rendering:optimizeSpeed}
+
+/* ── SIDEBAR ─────────────────────────────────── */
+.sidebar{background:var(--bg2);border-right:.5px solid var(--border);
+  padding:1rem .85rem;display:flex;flex-direction:column;gap:2px;
+  overflow:hidden;height:100vh;will-change:transform;contain:layout style}
+
+.logo{font-size:14px;font-weight:600;letter-spacing:-.01em;
+  padding:0 0 .75rem;border-bottom:.5px solid var(--border);margin-bottom:.3rem;
+  display:flex;align-items:center;gap:8px}
+.logo img{width:22px;height:22px;border-radius:5px;flex-shrink:0}
+
+.ai-bar{display:flex;align-items:center;gap:4px;padding:5px 8px;
+  border-radius:var(--r);background:var(--bg3);border:.5px solid var(--border);
+  margin-bottom:.3rem}
+.pill{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:500}
+.pill-teal{background:var(--teal-bg);color:var(--teal-text)}
+.pill-blue{background:var(--blue-bg);color:var(--blue-text)}
+.ai-arrow{color:var(--text3);font-size:10px}
+.ai-label{font-size:9px;color:var(--text3);margin-left:auto}
+
+.nav-btn{display:flex;align-items:center;gap:8px;padding:7px 9px;
+  border-radius:var(--r);font-size:12px;color:var(--text2);
+  cursor:pointer;border:none;background:none;width:100%;text-align:left;
+  transition:background var(--fast) var(--ease),color var(--fast) var(--ease),transform var(--fast) var(--ease);
+  transform:translateX(0) translateZ(0);will-change:transform}
+.nav-btn:hover{background:var(--bg4);color:var(--text);transform:translateX(2px) translateZ(0)}
+.nav-btn.active{background:var(--bg3);color:var(--text);font-weight:500;border:.5px solid var(--border2)}
+.nav-btn:active{transform:scale(.97) translateZ(0);transition-duration:60ms}
+.nav-icon{width:14px;height:14px;flex-shrink:0;opacity:.38;transition:opacity var(--fast)}
+.nav-btn.active .nav-icon,.nav-btn:hover .nav-icon{opacity:1}
+.notif-dot{width:6px;height:6px;border-radius:50%;background:var(--red);margin-left:auto;animation:blink 2.4s var(--ease) infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sidebar-footer{margin-top:auto;padding-top:.7rem;border-top:.5px solid var(--border)}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);
+  animation:pulse-dot 3s var(--ease) infinite;will-change:box-shadow}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 4px var(--teal)}50%{box-shadow:0 0 12px var(--teal),0 0 24px rgba(29,158,117,.25)}}
+
+/* ── MAIN ──────────────────────────────────────── */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg);contain:layout}
+.topbar{padding:.65rem 1.2rem;border-bottom:.5px solid var(--border);
+  display:flex;align-items:center;gap:10px;background:var(--bg);flex-shrink:0}
+.topbar-title{font-size:13px;font-weight:500;flex:1}
+.topbar-badge{font-size:10px;padding:2px 9px;border-radius:999px;
+  background:var(--teal-bg);color:var(--teal-text);font-weight:500}
+.bell-wrap{position:relative}
+.bell-btn{width:27px;height:27px;border-radius:var(--r);border:.5px solid var(--border);
+  background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background var(--fast),transform var(--fast);transform:translateZ(0)}
+.bell-btn:hover{background:var(--bg4);transform:scale(1.06) translateZ(0)}
+.bell-btn:active{transform:scale(.94) translateZ(0);transition-duration:60ms}
+.bell-count{position:absolute;top:-4px;right:-4px;width:15px;height:15px;border-radius:50%;
+  background:var(--red);color:#fff;font-size:9px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;
+  animation:pop-in var(--mid) var(--eout) both}
+
+/* ── MODE TOGGLE ─────────────────────────────── */
+.mode-toggle{display:flex;align-items:center;background:var(--bg3);
+  border:.5px solid var(--border2);border-radius:999px;padding:3px;gap:2px}
+.mode-btn{font-size:11px;font-weight:500;padding:4px 12px;border-radius:999px;
+  border:none;background:none;color:var(--text2);cursor:pointer;
+  transition:background var(--fast) var(--ease),color var(--fast) var(--ease),
+             transform var(--fast) var(--ease);
+  white-space:nowrap;transform:translateZ(0)}
+.mode-btn:hover{color:var(--text)}
+.mode-btn:active{transform:scale(.95) translateZ(0)}
+.mode-btn.mode-active-normal{background:var(--bg);color:var(--text);
+  box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.mode-btn.mode-active-agent{background:var(--teal);color:#fff;
+  box-shadow:0 1px 4px rgba(29,158,117,.35)}
+
+/* ── SIDEBAR SECTION LABELS ──────────────────── */
+.nav-section{font-size:9px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.08em;
+  padding:8px 9px 3px;margin-top:2px}
+
+/* ── AGENT HIGHLIGHT IN SIDEBAR ──────────────── */
+.nav-btn.agent-nav.mode-active-agent{
+  background:rgba(29,158,117,.15);color:var(--teal-text);
+  border-color:rgba(29,158,117,.3)}
+.nav-btn.agent-nav .nav-icon{color:var(--teal-text)}
+
+@keyframes pop-in{0%{transform:scale(0) translateZ(0);opacity:0}70%{transform:scale(1.2) translateZ(0)}100%{transform:scale(1) translateZ(0);opacity:1}}
+
+/* ── CONTENT ─────────────────────────────────── */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:1rem 1.2rem;
+  display:flex;flex-direction:column;gap:.8rem;background:var(--bg);
+  scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--bg4) transparent}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+
+/* ── SCREENS ─────────────────────────────────── */
+.screen{display:none;flex-direction:column;gap:.8rem}
+.screen.active{display:flex;animation:screen-in var(--slow) var(--eout) both}
+@keyframes screen-in{from{opacity:0;transform:translateY(6px) translateZ(0)}to{opacity:1;transform:translateY(0) translateZ(0)}}
+
+/* ── CARDS ───────────────────────────────────── */
+.card{border:.5px solid var(--border);border-radius:var(--rl);overflow:hidden;background:var(--bg2);transition:border-color var(--fast)}
+.card:hover{border-color:var(--border2)}
+.card-head{padding:.58rem 1rem;background:var(--bg3);border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-ht{font-size:12px;font-weight:500}
+.card-body{padding:.7rem 1rem}
+
+/* ── ENGINE CARDS (clickable) ────────────────── */
+.engine-card{border:.5px solid var(--border);border-radius:var(--rl);padding:.75rem 1rem;
+  display:flex;align-items:center;gap:12px;cursor:pointer;background:var(--bg2);
+  transition:border-color var(--fast),transform var(--mid) var(--ease),background var(--fast);
+  transform:translateZ(0);will-change:transform;user-select:none}
+.engine-card:hover{border-color:var(--border2);transform:translateY(-1px) translateZ(0)}
+.engine-card:active{transform:scale(.98) translateZ(0);transition-duration:60ms}
+.engine-card.selected-claude{border-color:rgba(29,158,117,.5);background:rgba(29,158,117,.07)}
+.engine-card.selected-gemini{border-color:rgba(55,138,221,.5);background:rgba(55,138,221,.07)}
+.engine-card.selected-auto{border-color:var(--border2)}
+.engine-card.selected-groq{border-color:rgba(255,140,0,.5);background:rgba(255,140,0,.07)}
+.engine-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.engine-info{flex:1;min-width:0}
+.engine-name{font-size:12px;font-weight:500}
+.engine-desc{font-size:11px;color:var(--text2);margin-top:2px}
+.engine-model{font-size:10px;color:var(--text3);margin-top:2px;font-family:monospace}
+
+/* ── METRICS ─────────────────────────────────── */
+.mrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.mc{background:var(--bg2);border-radius:var(--r);padding:.65rem .85rem;border:.5px solid var(--border);
+  transition:border-color var(--fast),transform var(--mid) var(--ease);transform:translateZ(0)}
+.mc:hover{border-color:var(--border2);transform:translateY(-1px) translateZ(0)}
+.mv{font-size:22px;font-weight:500;line-height:1.2}
+.ms{font-size:11px;color:var(--text2);margin-top:1px}
+
+/* ── TAGS ────────────────────────────────────── */
+.tag{font-size:10px;padding:2px 7px;border-radius:999px;border:.5px solid var(--border);color:var(--text2);display:inline-block;transition:opacity var(--fast)}
+.tag:hover{opacity:.8}
+.tag-g{background:var(--teal-bg);color:var(--teal-text);border-color:rgba(29,158,117,.2)}
+.tag-b{background:var(--blue-bg);color:var(--blue-text);border-color:rgba(55,138,221,.2)}
+.tag-r{background:var(--red-bg);color:var(--red-text);border-color:rgba(216,90,48,.2)}
+.tag-p{background:var(--purple-bg);color:var(--purple-text);border-color:transparent}
+.tag-a{background:var(--amber-bg);color:var(--amber-text);border-color:transparent}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+
+/* ── TASK ROWS ───────────────────────────────── */
+.trow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:.5px solid var(--border)}
+.trow:last-child{border:none;padding-bottom:0}
+.tdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tdot-done{background:var(--teal)}
+.tdot-now{background:var(--blue);animation:pulse-blue 2s var(--ease) infinite}
+@keyframes pulse-blue{0%,100%{box-shadow:0 0 0 0 rgba(55,138,221,.5)}50%{box-shadow:0 0 0 4px rgba(55,138,221,0)}}
+.tdot-todo{background:var(--bg4)}
+.tt{font-size:12px;flex:1}.tt-done{text-decoration:line-through;color:var(--text3)}
+.te{font-size:10px;color:var(--text3)}
+.bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:8px}
+.barfill{height:100%;border-radius:2px;background:var(--teal);transition:width .6s var(--eout)}
+
+/* ── JOB CARDS ───────────────────────────────── */
+.jcard{border:.5px solid var(--border);border-radius:var(--rl);padding:.8rem 1rem;
+  display:flex;gap:.75rem;align-items:flex-start;background:var(--bg2);
+  transition:border-color var(--fast),transform var(--mid) var(--ease);transform:translateZ(0)}
+.jcard:hover{border-color:var(--border2);transform:translateY(-1px) translateZ(0)}
+.jlogo{width:32px;height:32px;border-radius:7px;background:var(--bg3);border:.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.ji{flex:1;min-width:0}.jt{font-size:13px;font-weight:500}
+.jc{font-size:11px;color:var(--text2);margin-top:1px}
+
+/* ── NOTIF CARDS ─────────────────────────────── */
+.ncard{border:.5px solid var(--border);border-radius:var(--rl);padding:.7rem 1rem;
+  display:flex;gap:10px;align-items:flex-start;background:var(--bg2);
+  animation:slide-in var(--mid) var(--eout) both;transform:translateZ(0)}
+@keyframes slide-in{from{opacity:0;transform:translateX(-6px) translateZ(0)}to{opacity:1;transform:translateX(0) translateZ(0)}}
+.nicon{width:28px;height:28px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nt{font-size:12px;font-weight:500}.ns{font-size:11px;color:var(--text2);margin-top:2px}
+.ntime{font-size:10px;color:var(--text3);margin-top:3px}
+.nunread{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:5px}
+
+/* ── KEY ROWS ────────────────────────────────── */
+.key-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--border);
+  cursor:pointer;transition:background var(--fast);border-radius:var(--r);padding-left:4px;padding-right:4px}
+.key-row:last-child{border:none}
+.key-row:hover{background:var(--bg3)}
+.key-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.key-name{font-size:12px;font-weight:500;flex:1}.key-sub{font-size:10px;color:var(--text3)}
+.key-edit-btn{font-size:10px;padding:2px 8px;border-radius:var(--r);border:.5px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;opacity:0;transition:opacity var(--fast)}
+.key-row:hover .key-edit-btn{opacity:1}
+
+/* ── INLINE KEY EDITOR (modal-like) ──────────── */
+.key-editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;animation:fade-in var(--fast) var(--eout)}
+.key-editor.open{display:flex}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.key-editor-box{background:var(--bg2);border:.5px solid var(--border2);border-radius:12px;padding:1.5rem;width:420px;
+  animation:slide-up var(--mid) var(--eout);box-shadow:0 24px 48px rgba(0,0,0,.4)}
+@keyframes slide-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.key-editor-title{font-size:14px;font-weight:500;margin-bottom:.25rem}
+.key-editor-sub{font-size:11px;color:var(--text3);margin-bottom:1rem}
+
+/* ── LEET CODE ───────────────────────────────── */
+.lrow{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:.5px solid var(--border)}
+.lrow:last-child{border:none}
+.diff{font-size:10px;padding:1px 6px;border-radius:999px;font-weight:500;flex-shrink:0}
+.easy{background:rgba(59,109,17,.25);color:#7ec254}
+.med{background:var(--amber-bg);color:var(--amber-text)}
+.hard{background:var(--red-bg);color:var(--red-text)}
+.ln{font-size:12px;flex:1}
+
+/* ── INPUTS & BUTTONS ────────────────────────── */
+input,select,textarea{font-family:var(--font);font-size:12px;padding:7px 10px;
+  border:.5px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text);outline:none;width:100%;
+  transition:border-color var(--fast),box-shadow var(--fast)}
+input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(29,158,117,.18)}
+.btn{font-family:var(--font);font-size:12px;padding:7px 14px;border-radius:var(--r);cursor:pointer;
+  border:.5px solid var(--border2);background:var(--bg3);color:var(--text);
+  transition:background var(--fast),transform var(--fast);transform:translateZ(0)}
+.btn:hover{background:var(--bg4)}.btn:active{transform:scale(.96) translateZ(0);transition-duration:60ms}
+.btn-primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-primary:hover{background:#22b887}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:rgba(216,90,48,.3)}
+
+/* ── CHAT ────────────────────────────────────── */
+.chat-box{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rl);
+  padding:1rem;min-height:160px;max-height:320px;overflow-y:auto;
+  font-size:13px;line-height:1.7;white-space:pre-wrap;color:var(--text)}
+.chat-engine{font-size:10px;color:var(--text3);margin-top:5px}
+.engine-claude{color:var(--teal-text);font-weight:500}
+.engine-gemini{color:var(--blue-text);font-weight:500}
+.engine-groq{color:var(--amber-text);font-weight:500}
+
+/* ── MISC ────────────────────────────────────── */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slabel{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.srow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:.5px solid var(--border)}
+.srow:last-child{border:none}
+.stime{font-size:11px;color:var(--text3);width:56px;flex-shrink:0}
+.week-card{border:.5px solid var(--border);border-radius:var(--rl);overflow:hidden;background:var(--bg2)}
+.week-head{padding:.58rem 1rem;background:var(--bg3);border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.week-body{padding:.7rem 1rem;display:flex;flex-direction:column}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:12px;line-height:1.6}
+.spinner{width:13px;height:13px;border:1.5px solid var(--border2);border-top-color:var(--teal);
+  border-radius:50%;animation:spin .65s linear infinite;display:inline-block;will-change:transform}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:1ms!important;transition-duration:1ms!important}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <img src="/static/icons/logo.png" alt="PrepAI logo" onerror="this.style.display='none';document.querySelector('.logo-dot-fb').style.display='block'">
+    <div class="logo-dot logo-dot-fb" style="display:none"></div>
+    PrepAI <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:2px">v2</span>
+  </div>
+
+  <div class="ai-bar">
+    <span class="pill pill-teal" id="engine-badge">Claude</span>
+    <span class="ai-arrow">→</span>
+    <span class="pill pill-blue">Gemini</span>
+    <span class="ai-label" id="engine-mode-label">auto</span>
+  </div>
+
+  <div class="nav-section">Normal mode</div>
+  <button class="nav-btn active" data-screen="dashboard" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-btn" data-screen="jobs" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="10" rx="1"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
+    Job scanner
+  </button>
+  <button class="nav-btn" data-screen="projects" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12L6 4l4 6 2-3 2 5"/></svg>
+    Projects
+  </button>
+  <button class="nav-btn" data-screen="coding" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 5L2 8l3 3M11 5l3 3-3 3M9 3l-2 10"/></svg>
+    Coding prep
+  </button>
+  <button class="nav-btn" data-screen="ask" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 6.5a2 2 0 113 1.7V9M8 11h.01"/></svg>
+    Ask AI
+  </button>
+  <div class="nav-section" id="agent-nav-section">Agent mode</div>
+  <button class="nav-btn agent-nav" data-screen="agent" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h2l2-5 2 10 2-5h2"/></svg>
+    Agent
+  </button>
+  <button class="nav-btn" data-screen="timeline" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+    Timeline
+  </button>
+  <button class="nav-btn" id="notif-nav" data-screen="notifications" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a5 5 0 015 5v3l1 2H2l1-2V7a5 5 0 015-5z"/><path d="M6.5 13.5a1.5 1.5 0 003 0"/></svg>
+    Notifications
+    <span class="notif-dot" id="notif-dot" style="display:none"></span>
+  </button>
+  <button class="nav-btn" data-screen="questions" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
+    Question bank
+  </button>
+  <button class="nav-btn" data-screen="resume" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h4M6 9h4M6 12h2"/></svg>
+    Resume
+  </button>
+  <button class="nav-btn" data-screen="memoryview" onclick="nav(this)">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="8" cy="5" rx="6" ry="3"/><path d="M2 5v3c0 1.66 2.69 3 6 3s6-1.34 6-3V5"/><path d="M2 8v3c0 1.66 2.69 3 6 3s6-1.34 6-3V8"/></svg>
+    Memory
+  </button>
+  <div class="sidebar-footer">
+    <button class="nav-btn" data-screen="settings" onclick="nav(this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/></svg>
+      Settings & keys
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="page-title">Dashboard</span>
+    <span class="topbar-badge" id="page-badge"></span>
+
+    <!-- Mode toggle — always visible -->
+    <div class="mode-toggle" id="mode-toggle" title="Switch between Normal and Agent mode">
+      <button class="mode-btn mode-active-normal" id="mode-btn-normal" onclick="setMode('normal')">
+        ⚡ Normal
+      </button>
+      <button class="mode-btn" id="mode-btn-agent" onclick="setMode('agent')">
+        🤖 Agent
+      </button>
+    </div>
+
+    <div class="bell-wrap">
+      <button class="bell-btn" onclick="nav(document.querySelector('[data-screen=notifications]'))">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a5 5 0 015 5v3l1 2H2l1-2V7a5 5 0 015-5z"/><path d="M6.5 13.5a1.5 1.5 0 003 0"/></svg>
+      </button>
+      <span class="bell-count" id="bell-count" style="display:none">0</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="screen active" id="s-dashboard">
+      <!-- Profile card — shown when resume/memory has data -->
+      <div id="dash-profile" style="display:none;border:.5px solid var(--border);border-radius:var(--rl);
+           padding:.75rem 1rem;background:var(--bg2);align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--teal-bg);
+             display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;
+             color:var(--teal-text);flex-shrink:0" id="prof-avatar">?</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500" id="prof-name">Your profile</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:1px" id="prof-role"></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px" id="prof-skills"></div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px" id="prof-weak"></div>
+        </div>
+        <button class="btn btn-sm" onclick="nav(document.querySelector('[data-screen=resume]'))">
+          Edit profile
+        </button>
+      </div>
+
+      <div class="mrow">
+        <div class="mc"><div class="mv" id="m-days">—</div><div class="ms">Days left</div></div>
+        <div class="mc"><div class="mv" id="m-sessions">0</div><div class="ms">Sessions run</div></div>
+        <div class="mc"><div class="mv" id="m-questions">0</div><div class="ms">Questions banked</div></div>
+        <div class="mc"><div class="mv" id="m-completion">0%</div><div class="ms">Task completion</div></div>
+      </div>
+      <div class="mrow" style="margin-top:7px">
+        <div class="mc"><div class="mv" id="m-notifs">0</div><div class="ms">Notifications</div></div>
+        <div class="mc"><div class="mv" id="m-engine">—</div><div class="ms">AI engine</div></div>
+        <div class="mc"><div class="mv" id="m-jobs">0</div><div class="ms">Jobs tracked</div></div>
+        <div class="mc"><div class="mv" id="m-streak">—</div><div class="ms">Streak</div></div>
+      </div>
+
+      <!-- ENGINE CARDS — clickable to switch mode -->
+      <div>
+        <div class="slabel" style="margin-bottom:6px">AI engine — click to switch mode</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+
+          <!-- Auto card -->
+          <div class="engine-card" id="ec-auto" onclick="setEngine('auto')" title="Auto: Claude primary, Gemini fallback">
+            <div class="engine-avatar" style="background:linear-gradient(135deg,var(--teal-bg),var(--blue-bg));color:var(--text2);font-size:10px">A</div>
+            <div class="engine-info">
+              <div class="engine-name">Auto (recommended)</div>
+              <div class="engine-desc">Claude primary → Gemini fallback on rate limit</div>
+            </div>
+            <span class="tag" id="auto-badge">—</span>
+          </div>
+
+          <!-- Claude card -->
+          <div class="engine-card" id="ec-claude" onclick="setEngine('claude')" title="Claude only — no fallback">
+            <div class="engine-avatar" style="background:var(--teal-bg);color:var(--teal-text)">C</div>
+            <div class="engine-info">
+              <div class="engine-name">Claude only</div>
+              <div class="engine-desc">Prep plans, explanations, code walkthroughs</div>
+              <div class="engine-model" id="claude-model-label">—</div>
+            </div>
+            <span class="tag" id="claude-badge">—</span>
+          </div>
+
+          <!-- Gemini card -->
+          <div class="engine-card" id="ec-gemini" onclick="setEngine('gemini')" title="Gemini only — with Google Search grounding">
+            <div class="engine-avatar" style="background:var(--blue-bg);color:var(--blue-text)">G</div>
+            <div class="engine-info">
+              <div class="engine-name">Gemini only</div>
+              <div class="engine-desc">Google Search grounding for live job data</div>
+              <div class="engine-model" id="gemini-model-label">—</div>
+            </div>
+            <span class="tag" id="gemini-badge">—</span>
+          </div>
+
+          <!-- Groq card -->
+          <div class="engine-card" id="ec-groq" onclick="setEngine('groq')" title="Groq only — ultra-fast inference">
+            <div class="engine-avatar" style="background:var(--amber-bg);color:var(--amber-text)">GQ</div>
+            <div class="engine-info">
+              <div class="engine-name">Groq only</div>
+              <div class="engine-desc">Ultra-fast inference · Llama 3.3 70B · free tier available</div>
+              <div class="engine-model" id="groq-model-label">—</div>
+            </div>
+            <span class="tag" id="groq-badge">—</span>
+          </div>
+
+          <!-- Groq card -->
+          <div class="engine-card" id="ec-groq" onclick="setEngine('groq')" title="Groq only — ultra-fast inference">
+            <div class="engine-avatar" style="background:rgba(255,140,0,.12);color:#FFA500">⚡</div>
+            <div class="engine-info">
+              <div class="engine-name">Groq only</div>
+              <div class="engine-desc">Ultra-fast inference · llama-3.3-70b · function calling</div>
+              <div class="engine-model" id="groq-model-label">—</div>
+            </div>
+            <span class="tag" id="groq-badge">—</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TODAY'S FOCUS — dynamic -->
+      <div class="twocol">
+        <div>
+          <div class="slabel">Today's focus</div>
+          <div class="card">
+            <div class="card-body" id="focus-card">
+              <div class="empty" style="padding:.5rem 0;font-size:11px">
+                <span class="spinner"></span>&nbsp;Loading...
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="slabel">Upcoming</div>
+          <div class="card">
+            <div class="card-body" style="padding:.55rem 1rem">
+              <div class="srow"><span class="stime">9:00 AM</span><span style="font-size:12px;flex:1">Morning brief</span><span class="tag tag-g">daily</span></div>
+              <div class="srow"><span class="stime">6:00 PM</span><span style="font-size:12px;flex:1">LeetCode session</span><span class="tag tag-b">daily</span></div>
+              <div class="srow" id="deadline-row" style="display:none"><span class="stime" id="deadline-time"></span><span style="font-size:12px;flex:1" id="deadline-label"></span><span class="tag tag-r">deadline</span></div>
+              <div class="srow" id="countdown-row" style="display:none"><span class="stime" id="countdown-time"></span><span style="font-size:12px;flex:1" id="countdown-label">Countdown</span><span class="tag tag-p">countdown</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOB SCANNER -->
+    <div class="screen" id="s-jobs">
+      <div style="display:flex;gap:7px">
+        <input type="text" id="job-role" placeholder="Role (e.g. Python backend engineer)" value="Python backend engineer" style="flex:2">
+        <input type="text" id="job-loc"  placeholder="Location" value="Hyderabad" style="flex:1">
+        <button class="btn btn-primary" onclick="scanJobs()">Scan</button>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:10px;color:var(--text3)">Gemini + Google Search grounding:</span>
+        <span class="tag tag-g">LinkedIn</span><span class="tag tag-g">Naukri</span><span class="tag tag-g">Indeed</span><span class="tag tag-b">Glassdoor</span>
+      </div>
+      <div id="jobs-list"><div class="empty">Enter a role and click Scan to find live job listings.</div></div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="screen" id="s-projects">
+      <div style="display:flex;gap:7px">
+        <input type="text" id="proj-role" placeholder="Target role" value="Backend Engineer" style="flex:2">
+        <select id="proj-stack" style="flex:1"><option>Python</option><option>Java</option><option>JavaScript</option><option>Go</option></select>
+        <button class="btn btn-primary" onclick="loadProjects()">Generate</button>
+      </div>
+      <div id="projects-list"><div class="empty">Click Generate to get AI-suggested projects for your role.</div></div>
+    </div>
+
+    <!-- CODING PREP -->
+    <div class="screen" id="s-coding">
+      <div style="display:flex;gap:7px">
+        <input type="text" id="lc-username" placeholder="LeetCode username" style="flex:1">
+        <button class="btn btn-primary" onclick="loadLeetcode()">Load my data</button>
+      </div>
+      <div id="coding-content"><div class="empty">Enter your LeetCode username to see your personal queue and weak areas.</div></div>
+    </div>
+
+
+
+    <!-- RESUME -->
+    <div class="screen" id="s-resume">
+      <div>
+        <div class="slabel">Upload your resume — the agent uses this to personalise everything</div>
+        <div id="resume-drop-zone" style="border:1.5px dashed var(--border2);border-radius:var(--rl);padding:2rem;text-align:center;cursor:pointer;transition:border-color var(--fast),background var(--fast)"
+             onclick="document.getElementById('resume-file-input').click()"
+             ondragover="event.preventDefault();this.style.borderColor='var(--teal)'"
+             ondragleave="this.style.borderColor='var(--border2)'"
+             ondrop="handleResumeDrop(event)">
+          <div style="font-size:32px;margin-bottom:.5rem">📄</div>
+          <div style="font-size:13px;color:var(--text2)">Drop your resume here or click to browse</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:.25rem">PDF or DOCX · Max 10MB</div>
+        </div>
+        <input type="file" id="resume-file-input" accept=".pdf,.docx,.doc" style="display:none" onchange="uploadResume(this.files[0])">
+      </div>
+      <div id="resume-upload-status" style="display:none"></div>
+      <div id="resume-profile" style="display:none">
+        <div class="slabel">Parsed profile</div>
+        <div class="card" id="resume-profile-card"></div>
+      </div>
+    </div>
+
+    <!-- MEMORY VIEW -->
+    <div class="screen" id="s-memoryview">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;color:var(--text2)">Everything the agent remembers about you</div>
+        <button class="btn btn-sm btn-danger" onclick="clearMemory()">Clear all memory</button>
+      </div>
+      <div id="memory-content"><div class="empty"><span class="spinner"></span>&nbsp;Loading...</div></div>
+    </div>
+
+
+    <!-- QUESTION BANK -->
+    <div class="screen" id="s-questions">
+      <!-- Filter bar -->
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="qb-role" placeholder="Filter by role" style="flex:1">
+        <select id="qb-verdict" style="flex:1">
+          <option value="pass">Verified (passed judge)</option>
+          <option value="fail">Rejected (failed judge)</option>
+          <option value="flagged">Flagged (borderline)</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadQuestionBank()">Filter</button>
+      </div>
+
+      <!-- Generate more questions -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-ht">Generate + judge new questions</span>
+          <span class="tag tag-g" id="judge-status-tag">Judge ready</span>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:7px">
+            <input type="text" id="qb-gen-role" placeholder="Role" value="Software Engineer" style="flex:2">
+            <input type="text" id="qb-gen-company" placeholder="Company (optional)" style="flex:1">
+            <select id="qb-gen-cat" style="flex:1">
+              <option value="technical">Technical</option>
+              <option value="system-design">System design</option>
+              <option value="behavioural">Behavioural</option>
+              <option value="coding">Coding</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:7px;align-items:center">
+            <select id="qb-gen-count" style="width:80px">
+              <option value="3">3 Qs</option>
+              <option value="5" selected>5 Qs</option>
+              <option value="8">8 Qs</option>
+              <option value="10">10 Qs</option>
+            </select>
+            <button class="btn btn-primary" id="qb-gen-btn" onclick="generateAndJudge()">Generate + Judge</button>
+            <span style="font-size:11px;color:var(--text3)">Questions are validated before being saved</span>
+          </div>
+          <!-- Judge progress log -->
+          <div id="judge-log" style="display:none;flex-direction:column;gap:4px;margin-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- Question list -->
+      <div id="qb-list"><div class="empty">No questions yet. Generate some above or run the Agent.</div></div>
+    </div>
+
+    <!-- AGENT -->
+    <div class="screen" id="s-agent">
+      <!-- Goal input -->
+      <div>
+        <div class="slabel">Set your goal — the agent will plan and execute everything</div>
+        <textarea id="agent-goal" rows="2" style="resize:none;margin-top:4px"
+          placeholder="e.g. Get me ready for a Google SWE interview in 14 days"></textarea>
+        <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+          <input type="text" id="agent-role" placeholder="Target role" style="flex:1" value="Software Engineer">
+          <input type="text" id="agent-location" placeholder="Location" style="flex:1" value="India">
+          <input type="text" id="agent-lc" placeholder="LeetCode username (optional)" style="flex:1">
+          <select id="agent-stack" style="flex:1"><option>Python</option><option>Java</option><option>JavaScript</option><option>Go</option></select>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" id="agent-run-btn" onclick="runAgent()">▶ Run agent</button>
+          <button class="btn btn-sm" onclick="setAgentGoal('Get me ready for a Google SWE Python interview in 14 days')">Google SWE 14d</button>
+          <button class="btn btn-sm" onclick="setAgentGoal('Find backend engineer jobs matching my skills and set up my prep plan')">Find jobs + plan</button>
+          <button class="btn btn-sm" onclick="setAgentGoal('Assess my interview readiness and tell me what to focus on today')">Assess readiness</button>
+          <span class="tag" id="agent-engine-tag" style="margin-left:auto">auto</span>
+        </div>
+      </div>
+
+      <!-- Live agent log -->
+      <div id="agent-output" style="display:none">
+        <div class="slabel">Agent running — <span id="agent-step-label">starting...</span></div>
+        <div id="agent-log" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+
+      <!-- Final answer -->
+      <div id="agent-final" style="display:none">
+        <div class="slabel">Agent summary</div>
+        <div class="card">
+          <div class="card-body">
+            <div id="agent-final-text" style="font-size:13px;line-height:1.7;white-space:pre-wrap;color:var(--text)"></div>
+            <div id="agent-final-meta" style="font-size:10px;color:var(--text3);margin-top:.5rem"></div>
+          </div>
+        </div>
+        <button class="btn btn-sm" onclick="clearAgent()" style="margin-top:4px">Clear & run again</button>
+      </div>
+    </div>
+
+    <!-- ASK AI -->
+    <div class="screen" id="s-ask">
+      <div>
+        <div class="slabel">Ask Claude or Gemini anything about your prep</div>
+        <textarea id="ask-prompt" rows="3" style="resize:vertical;margin-top:4px" placeholder="e.g. 'Plan my prep for a Google SWE interview in 14 days'"></textarea>
+        <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="askAI()">Ask</button>
+          <button class="btn btn-sm" onclick="setPrompt('Create a 2-week study plan for a backend engineer interview')">Study plan</button>
+          <button class="btn btn-sm" onclick="setPrompt('Suggest 3 Python projects to strengthen my portfolio')">Projects</button>
+          <button class="btn btn-sm" onclick="setPrompt('Explain system design: URL shortener with cache and rate limiting')">System design</button>
+        </div>
+      </div>
+      <div id="ask-output" style="display:none">
+        <div class="chat-box" id="chat-box"></div>
+        <div class="chat-engine" id="chat-engine"></div>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="screen" id="s-timeline">
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="tl-date" style="flex:1">
+        <input type="text" id="tl-role" placeholder="Role" value="Software Engineer" style="flex:1">
+        <input type="text" id="tl-project" placeholder="Project" value="URL Shortener" style="flex:1">
+        <button class="btn btn-primary" onclick="loadTimeline()">Generate plan</button>
+      </div>
+      <div id="timeline-content"><div class="empty">Set your interview date and click Generate to get your personalised prep plan.</div></div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="screen" id="s-notifications">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;color:var(--text2)" id="notif-unread-label">Loading...</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" onclick="markAllRead()">Mark all read</button>
+          <button class="btn btn-sm" onclick="sendTestNotif('reminder')">Test notification</button>
+        </div>
+      </div>
+      <div id="notif-list"><div class="empty">No notifications yet.</div></div>
+      <div>
+        <div class="slabel">Notification schedule</div>
+        <div class="card"><div class="card-body" style="padding:.55rem 1rem">
+          <div class="srow"><span class="stime">9:00 AM</span><span style="font-size:12px;flex:1">Daily morning prep brief</span><span class="tag tag-g">daily</span></div>
+          <div class="srow"><span class="stime">6:00 PM</span><span style="font-size:12px;flex:1">LeetCode / coding session</span><span class="tag tag-b">daily</span></div>
+          <div class="srow"><span class="stime">72h prior</span><span style="font-size:12px;flex:1">Job application deadline</span><span class="tag tag-r">smart</span></div>
+          <div class="srow"><span class="stime">7d, 3d, 1d</span><span style="font-size:12px;flex:1">Interview countdown alerts</span><span class="tag tag-p">smart</span></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="screen" id="s-settings">
+      <div>
+        <div class="slabel">API keys — click any row to edit · AES-256 encrypted locally</div>
+        <div class="card">
+          <div class="card-body" id="keys-list" style="padding:.45rem 1rem"></div>
+        </div>
+      </div>
+      <div>
+        <div class="slabel">Interview date & notifications</div>
+        <div class="card"><div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="font-size:12px;color:var(--text2);width:140px">Interview date</label>
+            <input type="date" id="cfg-date" style="flex:1">
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="font-size:12px;color:var(--text2);width:140px">Morning reminder</label>
+            <input type="text" id="cfg-morning" placeholder="9" style="flex:1">
+            <span style="font-size:12px;color:var(--text3)">:00</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="font-size:12px;color:var(--text2);width:140px">Evening session</label>
+            <input type="text" id="cfg-evening" placeholder="18" style="flex:1">
+            <span style="font-size:12px;color:var(--text3)">:00</span>
+          </div>
+          <button class="btn btn-primary" style="align-self:flex-start" onclick="saveConfig()">Save settings</button>
+        </div></div>
+      </div>
+      <div>
+        <div class="slabel">Test notifications</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="sendTestNotif('reminder')">Morning reminder</button>
+          <button class="btn btn-sm" onclick="sendTestNotif('countdown')">Countdown</button>
+          <button class="btn btn-sm" onclick="sendTestNotif('deadline')">Deadline</button>
+          <button class="btn btn-sm" onclick="sendTestNotif('fallback')">AI fallback</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- INLINE KEY EDITOR MODAL -->
+<div class="key-editor" id="key-editor" onclick="if(event.target===this)closeKeyEditor()">
+  <div class="key-editor-box">
+    <div class="key-editor-title" id="ked-title">Edit API key</div>
+    <div class="key-editor-sub" id="ked-sub">Stored locally, AES-256 encrypted</div>
+    <input type="password" id="ked-input" placeholder="Paste your key here..." style="margin-bottom:.75rem" autocomplete="off">
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveKeyFromEditor()">Save key</button>
+      <button class="btn" onclick="closeKeyEditor()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteKeyFromEditor()">Remove</button>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:.75rem" id="ked-hint"></div>
+  </div>
+</div>
+
+<script>
+const idle = window.requestIdleCallback || (fn => setTimeout(fn, 50));
+const TITLES = {dashboard:'Dashboard',jobs:'Job scanner',projects:'Projects',coding:'Coding prep',ask:'Ask AI', agent:'Agent — Autonomous Prep',timeline:'Timeline',notifications:'Notifications',settings:'Settings & keys', resume:'Resume & Profile', memoryview:'Agent Memory', questions:'Question Bank'};
+const BADGES = {dashboard:'',jobs:'Gemini · live search',projects:'AI suggested',coding:'Personal queue',ask:'Claude + Gemini', agent:'',timeline:'AI planned',notifications:'',settings:'AES-256 encrypted', resume:'PDF · DOCX', memoryview:'Persistent across sessions', questions:'Verified by Judge'};
+
+// ── Mode toggle ───────────────────────────────────────────────────────────────
+// 'normal' = all screens except agent | 'agent' = agent screen only
+let _currentMode = 'normal';
+
+const NORMAL_SCREENS = ['dashboard','jobs','projects','coding','ask','timeline','notifications','settings'];
+const AGENT_SCREENS  = ['agent'];
+
+function setMode(mode) {
+  _currentMode = mode;
+  localStorage.setItem('prepai_mode', mode);
+
+  const btnNormal = document.getElementById('mode-btn-normal');
+  const btnAgent  = document.getElementById('mode-btn-agent');
+  const agentNavBtn = document.querySelector('.agent-nav');
+  const agentSection = document.getElementById('agent-nav-section');
+
+  if (mode === 'agent') {
+    btnNormal.className = 'mode-btn';
+    btnAgent.className  = 'mode-btn mode-active-agent';
+    // Highlight agent nav entry
+    agentNavBtn.classList.add('mode-active-agent');
+    // Navigate to agent screen
+    nav(agentNavBtn);
+  } else {
+    btnNormal.className = 'mode-btn mode-active-normal';
+    btnAgent.className  = 'mode-btn';
+    agentNavBtn.classList.remove('mode-active-agent');
+    // Navigate back to dashboard
+    nav(document.querySelector('[data-screen=dashboard]'));
+  }
+}
+
+function restoreMode() {
+  const saved = localStorage.getItem('prepai_mode') || 'normal';
+  if (saved === 'agent') setMode('agent');
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function nav(btn) {
+  const id = btn.dataset.screen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('page-title').textContent = TITLES[id];
+  document.getElementById('page-badge').textContent = BADGES[id]||'';
+  // Keep toggle in sync when navigating via sidebar directly
+  if (AGENT_SCREENS.includes(id)) {
+    document.getElementById('mode-btn-normal').className = 'mode-btn';
+    document.getElementById('mode-btn-agent').className  = 'mode-btn mode-active-agent';
+    _currentMode = 'agent';
+  } else {
+    document.getElementById('mode-btn-normal').className = 'mode-btn mode-active-normal';
+    document.getElementById('mode-btn-agent').className  = 'mode-btn';
+    _currentMode = 'normal';
+  }
+  if (id==='notifications') { loadNotifications(); idle(markAllRead); }
+  if (id==='settings') idle(loadKeys);
+  if (id==='resume') { idle(loadResumeProfile); }
+  if (id==='memoryview') idle(loadMemoryView);
+  if (id==='questions') idle(loadQuestionBank);
+  if (id==='dashboard') { idle(loadDashboard); idle(loadFocus); }
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const d = await api('/api/dashboard');
+  if (!d) return;
+
+  // Metrics
+  document.getElementById('m-days').textContent    = d.days_left!=null ? d.days_left+'d' : '—';
+  document.getElementById('m-notifs').textContent  = d.unread_notifications;
+  document.getElementById('m-engine').textContent  = (d.engine||'claude').charAt(0).toUpperCase()+(d.engine||'claude').slice(1);
+
+  // Memory stats
+  if (d.total_sessions !== undefined) {
+    const mSessions = document.getElementById('m-sessions');
+    const mQs       = document.getElementById('m-questions');
+    const mCompl    = document.getElementById('m-completion');
+    if (mSessions) mSessions.textContent = d.total_sessions;
+    if (mQs)       mQs.textContent       = d.questions_banked;
+    if (mCompl)    mCompl.textContent    = Math.round((d.task_completion_7d||0)*100)+'%';
+  }
+
+  // User profile card
+  const profCard = document.getElementById('dash-profile');
+  if (profCard && (d.user_name || d.current_role || d.has_resume)) {
+    profCard.style.display = 'block';
+    const name = d.user_name || '';
+    const role = d.current_role || '';
+    const skills = d.skills_count || 0;
+    const weak  = (d.weak_areas||[]).slice(0,3);
+    document.getElementById('prof-name').textContent   = name || 'Your profile';
+    document.getElementById('prof-role').textContent   = role || (d.has_resume ? 'Role detected from resume' : 'Upload resume to detect role');
+    document.getElementById('prof-skills').textContent = skills > 0 ? `${skills} skills detected` : '';
+    const weakEl = document.getElementById('prof-weak');
+    if (weakEl) weakEl.innerHTML = weak.map(w => `<span class="tag tag-r" style="font-size:9px">${w}</span>`).join('');
+  } else if (profCard) {
+    profCard.style.display = 'none';
+  }
+
+  // Countdown
+  if (d.days_left!=null) {
+    document.getElementById('countdown-row').style.display='flex';
+    document.getElementById('countdown-time').textContent = d.days_left+'d';
+    document.getElementById('countdown-label').textContent = `Interview in ${d.days_left} days`;
+  }
+
+  updateBell(d.unread_notifications);
+  document.getElementById('notif-dot').style.display = d.unread_notifications>0 ? 'block':'none';
+  idle(() => loadEngineStatus(d.preferred));
+}
+
+async function loadEngineStatus(preferred) {
+  const es = await api('/api/engine/status');
+  if (!es) return;
+  renderEngineCards(es);
+}
+
+function renderEngineCards(es) {
+  const pref = es.preferred || 'auto';
+  // Update sidebar pill
+  const badge = document.getElementById('engine-badge');
+  const modeLabel = document.getElementById('engine-mode-label');
+  badge.textContent = es.current_engine==='groq' ? 'Groq' : es.current_engine==='gemini' ? 'Gemini' : 'Claude';
+  modeLabel.textContent = pref;
+
+  // Highlight selected card
+  ['auto','claude','gemini','groq'].forEach(e => {
+    const c = document.getElementById('ec-'+e);
+    c.className = 'engine-card' + (pref===e ? ` selected-${e}` : '');
+  });
+
+  // Auto badge
+  document.getElementById('auto-badge').className = 'tag tag-g';
+  document.getElementById('auto-badge').textContent = pref==='auto' ? 'Active' : 'Select';
+
+  // Claude badge + model
+  const claudeOk = es.claude_has_key;
+  document.getElementById('claude-badge').className = `tag ${claudeOk?'tag-g':'tag-r'}`;
+  document.getElementById('claude-badge').textContent = pref==='claude' ? 'Active' : (claudeOk ? 'Ready' : 'No key');
+  const cm = es.current_model && es.current_engine==='claude' ? es.current_model : (es.claude_models?.[0]||'');
+  document.getElementById('claude-model-label').textContent = cm || 'Set API key to enable';
+
+  // Gemini badge + model
+  const geminiOk = es.gemini_has_key;
+  document.getElementById('gemini-badge').className = `tag ${geminiOk?'tag-b':'tag-r'}`;
+  document.getElementById('gemini-badge').textContent = pref==='gemini' ? 'Active' : (geminiOk ? 'Ready' : 'No key');
+  const gm = es.current_model && es.current_engine==='gemini' ? es.current_model : (es.gemini_models_preferred?.[0]||'');
+  document.getElementById('gemini-model-label').textContent = gm || 'Set API key to enable';
+
+  // Groq card
+  const groqOk = es.groq_has_key;
+  const ecGroq = document.getElementById('ec-groq');
+  if (ecGroq) {
+    ecGroq.className = 'engine-card' + (pref==='groq' ? ' selected-groq' : '');
+    document.getElementById('groq-badge').className = `tag ${groqOk?'tag-g':'tag-r'}`;
+    document.getElementById('groq-badge').textContent = pref==='groq' ? 'Active' : (groqOk ? 'Ready' : 'No key');
+    const grm = es.current_model && es.current_engine==='groq' ? es.current_model : (es.groq_models?.[0]||'');
+    document.getElementById('groq-model-label').textContent = grm || 'Set API key to enable';
+  }
+
+  document.getElementById('m-engine').textContent = es.current_engine||'—';
+}
+
+async function setEngine(engine) {
+  if (!['auto','claude','gemini','groq'].includes(engine)) return;
+  const res = await api('/api/engine/prefer','POST',{engine});
+  if (res?.ok) renderEngineCards(res.status);
+}
+
+// ── Focus ─────────────────────────────────────────────────────────────────────
+async function loadFocus() {
+  const data = await api('/api/focus');
+  const el = document.getElementById('focus-card');
+  if (!data || (!data.tasks?.length && !data.message)) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:.5rem 0"><span class="spinner"></span></div>';
+    return;
+  }
+  if (!data.tasks?.length) {
+    el.innerHTML = `<div style="font-size:11px;color:var(--text3);text-align:center;padding:.5rem 0">
+      ${data.message || 'Set your interview date in Settings.'}</div>`;
+    return;
+  }
+  const src = data.source==='memory' ? '· from memory' : '· ai generated';
+  el.innerHTML = data.tasks.map(t => `
+    <div class="trow" id="task-${t.id||''}" style="cursor:pointer" onclick="completeTask(${t.id||0},this)">
+      <div class="tdot ${t.done?'tdot-done':'tdot-todo'}" id="tdot-${t.id||''}"></div>
+      <div class="tt ${t.done?'tt-done':''}" id="ttext-${t.id||''}">${t.task||t.text||''}</div>
+      <div class="te">${t.duration||''}</div>
+    </div>`).join('') +
+    `<div class="bar" style="margin-top:8px"><div class="barfill" id="focus-bar" style="width:${data.pct||0}%"></div></div>
+     <div style="font-size:10px;color:var(--text3);margin-top:4px" id="focus-pct">${data.pct||0}% complete ${src}</div>`;
+}
+
+async function completeTask(taskId, rowEl) {
+  if (!taskId) return;
+  const dot  = document.getElementById('tdot-'+taskId);
+  const text = document.getElementById('ttext-'+taskId);
+  if (dot?.classList.contains('tdot-done')) return; // already done
+  await api('/api/focus/task/'+taskId+'/complete', 'POST', {});
+  if (dot)  { dot.className='tdot tdot-done'; }
+  if (text) { text.classList.add('tt-done'); }
+  // Recount
+  const allDots = document.querySelectorAll('.tdot');
+  const doneDots = document.querySelectorAll('.tdot-done');
+  const pct = Math.round(doneDots.length/allDots.length*100);
+  const bar = document.getElementById('focus-bar');
+  const pctEl = document.getElementById('focus-pct');
+  if (bar) bar.style.width = pct+'%';
+  if (pctEl) pctEl.textContent = pct+'% complete · from memory';
+}
+
+// ── Engine badge helper ───────────────────────────────────────────────────────
+function updateBell(count) {
+  const b = document.getElementById('bell-count');
+  b.textContent = count;
+  b.style.display = count>0 ? 'flex':'none';
+}
+
+// ── Jobs ──────────────────────────────────────────────────────────────────────
+async function scanJobs() {
+  const role=document.getElementById('job-role').value;
+  const location=document.getElementById('job-loc').value;
+  const list=document.getElementById('jobs-list');
+  list.innerHTML='<div class="empty"><span class="spinner"></span>&nbsp;Scanning via Gemini Search Grounding...</div>';
+  const data=await api('/api/jobs','POST',{role,location});
+  if (!data||data.error){list.innerHTML=`<div class="empty">${data?.error||'Error'}</div>`;return;}
+  if (!data.jobs?.length){list.innerHTML='<div class="empty">No structured results. Try rephrasing your role.</div>';return;}
+  list.innerHTML=data.jobs.map((j,i)=>`
+    <div class="jcard" style="margin-bottom:7px;animation-delay:${i*40}ms">
+      <div class="jlogo">${(j.company||'?')[0].toUpperCase()}</div>
+      <div class="ji">
+        <div class="jt">${j.title||''}</div>
+        <div class="jc">${j.company||''} · ${j.location||''} ${j.source?'· via '+j.source:''}</div>
+        <div class="tags">
+          ${j.match_percent?`<span class="tag tag-g">${j.match_percent}% match</span>`:''}
+          ${(j.skills||[]).slice(0,3).map(s=>`<span class="tag tag-b">${s}</span>`).join('')}
+          ${j.deadline?`<span class="tag tag-r">Closes ${j.deadline}</span>`:''}
+        </div>
+      </div>
+      ${j.url?`<a href="${j.url}" target="_blank" class="btn btn-sm" style="white-space:nowrap;align-self:flex-start">Apply ↗</a>`:''}
+    </div>`).join('');
+  document.getElementById('page-badge').textContent=data.grounded?'Gemini · search grounded':'Gemini';
+}
+
+// ── Projects ──────────────────────────────────────────────────────────────────
+async function loadProjects() {
+  const role=document.getElementById('proj-role').value;
+  const stack=document.getElementById('proj-stack').value;
+  const list=document.getElementById('projects-list');
+  list.innerHTML='<div class="empty"><span class="spinner"></span>&nbsp;Generating with Claude...</div>';
+  const data=await api('/api/projects','POST',{role,stack});
+  if (!data||data.error){list.innerHTML=`<div class="empty">${data?.error||'Error'}</div>`;return;}
+  list.innerHTML=(data.projects||[]).map((p,i)=>`
+    <div class="card" style="margin-bottom:8px;animation:screen-in var(--slow) var(--eout) ${i*60}ms both">
+      <div class="card-head">
+        <span class="card-ht">${p.title||''}</span>
+        <span class="tag ${p.difficulty==='Easy'?'tag-g':p.difficulty==='Hard'?'tag-r':'tag-a'}">${p.difficulty||''} · ${p.days_to_complete||'?'}d</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${p.description||''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:7px">${p.why_it_matters||''}</div>
+        <div class="tags">${(p.skills||[]).map(s=>`<span class="tag tag-b">${s}</span>`).join('')}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Leetcode ──────────────────────────────────────────────────────────────────
+async function loadLeetcode() {
+  const username=document.getElementById('lc-username').value.trim();
+  if (!username) return;
+  const el=document.getElementById('coding-content');
+  el.innerHTML='<div class="empty"><span class="spinner"></span>&nbsp;Fetching your LeetCode data...</div>';
+  const data=await api(`/api/leetcode/${username}`);
+  if (!data||data.error){el.innerHTML=`<div class="empty">${data?.error||'Error'}</div>`;return;}
+  const dc=d=>d==='Easy'?'easy':d==='Medium'?'med':'hard';
+  el.innerHTML=`
+    <div class="twocol" style="margin-bottom:8px">
+      <div class="mc"><div class="mv">${data.streak||0}</div><div class="ms">Day streak</div></div>
+      <div class="mc"><div class="mv">${(data.daily_queue||[]).length}</div><div class="ms">Problems today</div></div>
+    </div>
+    <div class="slabel">Weak topics</div>
+    <div class="tags" style="margin-bottom:10px">${(data.weak_topics||[]).map(t=>`<span class="tag tag-r">${t}</span>`).join('')}</div>
+    <div class="slabel">Today's queue</div>
+    <div class="card"><div class="card-body" style="padding:.5rem 1rem">
+      ${(data.daily_queue||[]).filter(p=>!p.error).map(p=>`
+        <div class="lrow">
+          <span class="diff ${dc(p.difficulty)}">${p.difficulty||''}</span>
+          <span class="ln">${p.title||''}</span>
+          ${p.url?`<a href="${p.url}" target="_blank" style="font-size:10px;color:var(--blue-text)">Open ↗</a>`:''}
+        </div>`).join('')}
+    </div></div>`;
+}
+
+// ── Ask AI ────────────────────────────────────────────────────────────────────
+function setPrompt(t){document.getElementById('ask-prompt').value=t}
+function askAI() {
+  const prompt=document.getElementById('ask-prompt').value.trim();
+  if (!prompt) return;
+  const box=document.getElementById('chat-box');
+  const engEl=document.getElementById('chat-engine');
+  document.getElementById('ask-output').style.display='block';
+  box.textContent=''; engEl.textContent='';
+  const es=new EventSource(`/api/ask/stream?prompt=${encodeURIComponent(prompt)}`);
+  let engine='claude',model='';
+  es.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(d.chunk){box.textContent+=d.chunk;box.scrollTop=box.scrollHeight;engine=d.engine||engine;model=d.model||model;}
+    if(d.done){
+      es.close();
+      engEl.innerHTML=`via <span class="engine-${engine}">${engine.charAt(0).toUpperCase()+engine.slice(1)}</span> · <span style="font-family:monospace;font-size:10px">${model}</span>${d.fallback?' (fallback)':''}`;
+      document.getElementById('engine-badge').textContent=engine==='groq'?'Groq':engine==='gemini'?'Gemini':'Claude';
+    }
+    if(d.error){box.textContent+=`\nError: ${d.error}`;es.close();}
+  };
+  es.onerror=()=>es.close();
+}
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+async function loadTimeline() {
+  const dateVal=document.getElementById('tl-date').value;
+  const role=document.getElementById('tl-role').value;
+  const project=document.getElementById('tl-project').value;
+  const el=document.getElementById('timeline-content');
+  let days_left=14;
+  if(dateVal){const diff=Math.ceil((new Date(dateVal)-new Date())/86400000);days_left=Math.max(diff,3);}
+  el.innerHTML='<div class="empty"><span class="spinner"></span>&nbsp;Building your plan...</div>';
+  const data=await api('/api/timeline','POST',{days_left,role,project});
+  if(!data||data.error){el.innerHTML=`<div class="empty">${data?.error||'Error'}</div>`;return;}
+  const weeks=Array.isArray(data.timeline)?data.timeline:data.timeline?.weeks||[];
+  el.innerHTML=weeks.map((w,i)=>`
+    <div class="week-card" style="margin-bottom:8px;animation:screen-in var(--slow) var(--eout) ${i*70}ms both">
+      <div class="week-head" ${i===0?'style="background:var(--teal-bg)"':''}>
+        <span class="card-ht" ${i===0?'style="color:var(--teal-text)"':''}>${w.title||'Week '+w.week_number}</span>
+        ${i===0?'<span class="tag tag-g">Current</span>':''}
+      </div>
+      <div class="week-body">
+        ${(w.tasks||[]).map(t=>`
+          <div class="trow">
+            <div class="tdot ${i===0?'tdot-now':'tdot-todo'}"></div>
+            <div class="tt">${t}</div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+async function loadNotifications() {
+  const data=await api('/api/notifications');
+  if(!data)return;
+  document.getElementById('notif-unread-label').textContent=`${data.unread} unread`;
+  updateBell(data.unread);
+  const list=document.getElementById('notif-list');
+  const ibg={daily_morning:'var(--teal-bg)',daily_evening:'var(--blue-bg)',countdown:'var(--amber-bg)',deadline:'var(--red-bg)',fallback_alert:'var(--purple-bg)'};
+  if(!data.notifications?.length){list.innerHTML='<div class="empty">No notifications yet.</div>';return;}
+  list.innerHTML=data.notifications.map((n,i)=>`
+    <div class="ncard" style="margin-bottom:6px;animation-delay:${i*30}ms">
+      <div class="nicon" style="background:${ibg[n.type]||'var(--blue-bg)'}">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a5 5 0 015 5v3l1 2H2l1-2V7a5 5 0 015-5z"/></svg>
+      </div>
+      <div style="flex:1"><div class="nt">${n.title}</div><div class="ns">${n.message}</div><div class="ntime">${(n.sent_at||'').slice(0,16)} · ${n.type}</div></div>
+      ${!n.read?'<div class="nunread"></div>':''}
+    </div>`).join('');
+}
+async function markAllRead(){await api('/api/notifications/read','POST',{});document.getElementById('notif-dot').style.display='none';updateBell(0);}
+async function sendTestNotif(type){await api('/api/notifications/test','POST',{type});idle(loadNotifications);}
+
+// ── Settings / Keys ───────────────────────────────────────────────────────────
+const KEY_META = {
+  anthropic_api_key:      {label:'Anthropic (Claude)',     bg:'var(--teal-bg)',   color:'var(--teal-text)',   icon:'C', hint:'Get from console.anthropic.com/keys', placeholder:'sk-ant-...'},
+  gemini_api_key:         {label:'Google Gemini',          bg:'var(--blue-bg)',   color:'var(--blue-text)',   icon:'G', hint:'Get from aistudio.google.com/app/apikey', placeholder:'AIza...'},
+  leetcode_session_token: {label:'LeetCode session token', bg:'var(--amber-bg)',  color:'var(--amber-text)',  icon:'LC',hint:'DevTools → Application → Cookies → LEETCODE_SESSION', placeholder:'eyJ...'},
+  hackerrank_api_key:     {label:'HackerRank API key',     bg:'var(--purple-bg)', color:'var(--purple-text)', icon:'HR',hint:'hackerrank.com/settings/api', placeholder:''},
+  groq_api_key:           {label:'Groq API key',          bg:'rgba(255,140,0,.15)',color:'#FFA500',         icon:'⚡',hint:'console.groq.com/keys', placeholder:'gsk_...'},
+  linkedin_cookie:        {label:'LinkedIn cookie',        bg:'var(--blue-bg)',   color:'var(--blue-text)',   icon:'Li',hint:'DevTools → Application → Cookies → li_at', placeholder:'li_at=...'},
+  naukri_cookie:          {label:'Naukri cookie',          bg:'var(--teal-bg)',   color:'var(--teal-text)',   icon:'Na',hint:'DevTools → Application → Cookies', placeholder:''},
+};
+
+let _editorKey = '';
+
+async function loadKeys() {
+  const data=await api('/api/keys');
+  if(!data)return;
+  document.getElementById('keys-list').innerHTML=Object.entries(data.status).map(([k,isSet])=>{
+    const m=KEY_META[k]||{label:k,bg:'var(--bg3)',color:'var(--text2)',icon:'?',hint:'',placeholder:''};
+    return `<div class="key-row" onclick="openKeyEditor('${k}')">
+      <div class="key-icon" style="background:${m.bg};color:${m.color}">${m.icon}</div>
+      <div style="flex:1"><div class="key-name">${m.label}</div><div class="key-sub">${k}</div></div>
+      <span class="tag ${isSet?'tag-g':'tag-r'}">${isSet?data.masked[k]||'set':'click to add'}</span>
+      <button class="key-edit-btn">${isSet?'Edit':'Add'}</button>
+    </div>`;
+  }).join('');
+  const cfg=await api('/api/dashboard');
+  if(cfg?.interview_date) document.getElementById('cfg-date').value=cfg.interview_date;
+}
+
+function openKeyEditor(keyName) {
+  _editorKey = keyName;
+  const m = KEY_META[keyName]||{label:keyName,hint:'',placeholder:''};
+  document.getElementById('ked-title').textContent = `${m.label}`;
+  document.getElementById('ked-sub').textContent = m.hint || 'Stored locally, AES-256 encrypted';
+  document.getElementById('ked-input').placeholder = m.placeholder || 'Paste your key here...';
+  document.getElementById('ked-input').value = '';
+  document.getElementById('ked-hint').textContent = m.hint ? `📍 ${m.hint}` : '';
+  document.getElementById('key-editor').classList.add('open');
+  setTimeout(()=>document.getElementById('ked-input').focus(), 120);
+}
+
+function closeKeyEditor() {
+  document.getElementById('key-editor').classList.remove('open');
+  _editorKey = '';
+}
+
+async function saveKeyFromEditor() {
+  const val = document.getElementById('ked-input').value.trim();
+  if (!val || !_editorKey) return;
+  await api('/api/keys','POST',{name:_editorKey,value:val});
+  closeKeyEditor();
+  idle(loadKeys);
+  // If it was an AI key, refresh engine status
+  if (_editorKey.includes('anthropic')||_editorKey.includes('gemini')) idle(loadDashboard);
+}
+
+async function deleteKeyFromEditor() {
+  if (!_editorKey) return;
+  await fetch(`/api/keys/${_editorKey}`,{method:'DELETE'});
+  closeKeyEditor();
+  idle(loadKeys);
+}
+
+async function saveConfig() {
+  await api('/api/notifications/config','POST',{
+    interview_date:document.getElementById('cfg-date').value||null,
+    morning_hour:parseInt(document.getElementById('cfg-morning').value)||9,
+    evening_hour:parseInt(document.getElementById('cfg-evening').value)||18,
+  });
+  idle(loadDashboard); idle(loadFocus);
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+async function api(url,method='GET',body=null){
+  try{
+    const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):null});
+    return r.json();
+  }catch(e){console.error(url,e);return null;}
+}
+
+
+// ── Agent ─────────────────────────────────────────────────────────────────────
+let _agentES = null;
+let _agentSteps = 0;
+let _agentEngine = 'auto';
+
+function setAgentGoal(g) { document.getElementById('agent-goal').value = g; }
+
+async function runAgent() {
+  const goal = document.getElementById('agent-goal').value.trim();
+  if (!goal) return;
+
+  // Stop any running agent
+  if (_agentES) { _agentES.close(); _agentES = null; }
+
+  _agentSteps = 0;
+  document.getElementById('agent-output').style.display = 'block';
+  document.getElementById('agent-final').style.display = 'none';
+  document.getElementById('agent-log').innerHTML = '';
+  document.getElementById('agent-step-label').textContent = 'initialising...';
+  document.getElementById('agent-run-btn').disabled = true;
+  document.getElementById('agent-run-btn').textContent = '⏳ Running...';
+
+  const role     = document.getElementById('agent-role').value;
+  const location = document.getElementById('agent-location').value;
+  const lc       = document.getElementById('agent-lc').value;
+  const stack    = document.getElementById('agent-stack').value;
+
+  const params = new URLSearchParams({goal, role, location, stack});
+  if (lc) params.set('lc_username', lc);
+
+  _agentES = new EventSource(`/api/agent/run?${params}`);
+
+  _agentES.onmessage = e => {
+    const ev = JSON.parse(e.data);
+    handleAgentEvent(ev);
+    if (ev.type === 'done' || ev.type === 'final' || ev.type === 'error') {
+      _agentES.close(); _agentES = null;
+      document.getElementById('agent-run-btn').disabled = false;
+      document.getElementById('agent-run-btn').textContent = '▶ Run agent';
+    }
+  };
+  _agentES.onerror = () => {
+    _agentES.close(); _agentES = null;
+    document.getElementById('agent-run-btn').disabled = false;
+    document.getElementById('agent-run-btn').textContent = '▶ Run agent';
+    appendAgentLog('error', '⚠ Connection lost');
+  };
+}
+
+function handleAgentEvent(ev) {
+  const TOOL_ICONS = {
+    scan_jobs:'🔍', get_leetcode_queue:'💻', generate_timeline:'📅',
+    generate_focus:'🎯', suggest_projects:'🛠', analyse_readiness:'📊',
+    set_interview_date:'📌', set_job_deadline:'⏰', answer_question:'💡',
+  };
+
+  switch (ev.type) {
+    case 'engine':
+      _agentEngine = ev.engine;
+      document.getElementById('agent-engine-tag').textContent = `${ev.engine} · ${ev.model||''}`;
+      document.getElementById('agent-engine-tag').className = `tag ${ev.engine==='groq'?'tag-a':ev.engine==='gemini'?'tag-b':'tag-g'}`;
+      document.getElementById('engine-badge').textContent = ev.engine==='groq'?'Groq':ev.engine==='gemini'?'Gemini':'Claude';
+      break;
+
+    case 'thinking':
+      _agentSteps++;
+      document.getElementById('agent-step-label').textContent = `step ${ev.step}…`;
+      break;
+
+    case 'thought':
+      if (ev.text?.trim()) appendAgentLog('thought', `💭 ${ev.text.trim()}`);
+      break;
+
+    case 'tool_start':
+      const icon = TOOL_ICONS[ev.tool] || '⚙';
+      appendAgentLog('tool-start', `${icon} Calling <strong>${ev.tool}</strong>…`, 'pending', ev.tool);
+      break;
+
+    case 'tool_done':
+      updateToolLog(ev.tool, ev.result);
+      break;
+
+    case 'fallback':
+      appendAgentLog('fallback', `🔄 ${ev.text}`);
+      break;
+
+    case 'final':
+      document.getElementById('agent-step-label').textContent = `done in ${_agentSteps} steps`;
+      document.getElementById('agent-final').style.display = 'block';
+      document.getElementById('agent-final-text').textContent = ev.text;
+      document.getElementById('agent-final-meta').textContent = `${_agentSteps} steps · via ${_agentEngine}`;
+      break;
+
+    case 'error':
+      appendAgentLog('error', `⚠ ${ev.text}`);
+      document.getElementById('agent-step-label').textContent = 'error';
+      break;
+
+    case 'done':
+      if (document.getElementById('agent-final').style.display === 'none') {
+        document.getElementById('agent-step-label').textContent = `completed in ${_agentSteps} steps`;
+      }
+      break;
+  }
+}
+
+const _toolLogIds = {};
+
+function appendAgentLog(type, html, state='', toolName='') {
+  const log = document.getElementById('agent-log');
+  const id = toolName ? `tool-${toolName}` : `log-${Date.now()}`;
+  if (toolName) _toolLogIds[toolName] = id;
+
+  const colours = {
+    'thought':'var(--bg3)', 'tool-start':'var(--bg3)', 'fallback':'var(--amber-bg)',
+    'error':'var(--red-bg)', 'info':'var(--blue-bg)'
+  };
+  const textCols = {
+    'thought':'var(--text2)', 'tool-start':'var(--text)',
+    'fallback':'var(--amber-text)', 'error':'var(--red-text)', 'info':'var(--blue-text)'
+  };
+
+  const div = document.createElement('div');
+  div.id = id;
+  div.style.cssText = `
+    padding:8px 12px;border-radius:var(--r);font-size:12px;line-height:1.5;
+    background:${colours[type]||'var(--bg3)'};color:${textCols[type]||'var(--text2)'};
+    border:.5px solid var(--border);
+    animation:screen-in var(--mid) var(--eout) both;
+    display:flex;align-items:flex-start;gap:8px;
+  `;
+  if (state === 'pending') {
+    div.innerHTML = `<span class="spinner" style="flex-shrink:0;margin-top:1px"></span><span>${html}</span>`;
+  } else {
+    div.innerHTML = html;
+  }
+  log.appendChild(div);
+  div.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function updateToolLog(toolName, result) {
+  const id = _toolLogIds[toolName];
+  const el = id ? document.getElementById(id) : null;
+  if (el) {
+    el.style.background = 'var(--teal-bg)';
+    el.style.color = 'var(--teal-text)';
+    el.style.border = '.5px solid rgba(29,158,117,.2)';
+    el.innerHTML = `✓ <strong>${toolName}</strong> — ${result}`;
+  } else {
+    appendAgentLog('info', `✓ <strong>${toolName}</strong> — ${result}`);
+  }
+}
+
+function clearAgent() {
+  if (_agentES) { _agentES.close(); _agentES = null; }
+  document.getElementById('agent-output').style.display = 'none';
+  document.getElementById('agent-final').style.display = 'none';
+  document.getElementById('agent-log').innerHTML = '';
+  document.getElementById('agent-goal').value = '';
+  document.getElementById('agent-step-label').textContent = 'starting...';
+  _agentSteps = 0;
+}
+
+// Load engine preference on agent screen
+document.querySelector('[data-screen=agent]').addEventListener('click', async () => {
+  const es = await api('/api/engine/status');
+  if (es) {
+    document.getElementById('agent-engine-tag').textContent = es.preferred;
+    document.getElementById('agent-engine-tag').className = 'tag ' + (es.preferred==='gemini'?'tag-b':es.preferred==='claude'?'tag-g':'');
+  }
+});
+
+
+// ── Resume ────────────────────────────────────────────────────────────────────
+async function uploadResume(file) {
+  if (!file) return;
+  const status = document.getElementById('resume-upload-status');
+  status.style.display = 'block';
+  status.innerHTML = '<div class="empty"><span class="spinner"></span>&nbsp;Parsing resume with AI...</div>';
+
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const r = await fetch('/api/resume/upload', {method:'POST', body:form});
+    const data = await r.json();
+    if (data.error) { status.innerHTML = `<div class="empty" style="color:var(--red-text)">${data.error}</div>`; return; }
+    const name = data.name ? ` · ${data.name}` : '';
+    const role = data.role ? `, ${data.role}` : '';
+    status.innerHTML = `<div class="empty" style="color:var(--teal-text)">✓ Resume parsed — ${data.fields_extracted||'all'} fields extracted${name}${role}</div>`;
+    // Pre-fill agent role from resume
+    const agentRoleEl = document.getElementById('agent-role');
+    if (agentRoleEl && data.resume?.target_role) agentRoleEl.value = data.resume.target_role;
+    idle(loadResumeProfile);
+  } catch(e) {
+    status.innerHTML = `<div class="empty" style="color:var(--red-text)">Upload failed: ${e.message}</div>`;
+  }
+}
+
+function handleResumeDrop(e) {
+  e.preventDefault();
+  document.getElementById('resume-drop-zone').style.borderColor = 'var(--border2)';
+  const file = e.dataTransfer.files[0];
+  if (file) uploadResume(file);
+}
+
+async function loadResumeProfile() {
+  const data = await api('/api/resume');
+  if (!data || !data.resume || Object.keys(data.resume).length === 0) return;
+  const r = data.resume;
+  document.getElementById('resume-profile').style.display = 'block';
+  const parseList = (val) => { try { const a = JSON.parse(val); return Array.isArray(a)?a:[]; } catch{return[];} };
+  const parseList = (val) => { try { const a = JSON.parse(val); return Array.isArray(a)?a:[]; } catch{return[];} };
+  const skills     = parseList(r.skills).slice(0,12);
+  // past_companies is JSON string of company name strings e.g. ["Google","Amazon"]
+  const companies  = parseList(r.past_companies).slice(0,4);
+  const pastRoles  = parseList(r.past_roles).slice(0,4);
+  const projects   = parseList(r.projects).slice(0,3);
+  // Pre-fill agent role field from resume
+  const agentRoleEl = document.getElementById('agent-role');
+  if (agentRoleEl && r.target_role) agentRoleEl.value = r.target_role;
+  document.getElementById('resume-profile-card').innerHTML = `
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+      ${r.name?`<div style="display:flex;align-items:center;gap:8px">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--teal-bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--teal-text)">${r.name[0]||'?'}</div>
+        <div><div style="font-size:14px;font-weight:500">${r.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${r.current_role||''} ${r.current_company?'at '+r.current_company:''}</div></div>
+      </div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${r.years_exp?`<span class="tag tag-g">${r.years_exp}y exp</span>`:''}
+        ${r.target_role?`<span class="tag tag-b">→ ${r.target_role}</span>`:''}
+      </div>
+      ${skills.length?`<div><div class="slabel" style="margin-bottom:5px">Skills detected</div><div class="tags">${skills.map(s=>`<span class="tag tag-b">${s}</span>`).join('')}</div></div>`:''}
+      ${companies.length?`<div><div class="slabel" style="margin-bottom:5px">Past companies</div><div style="display:flex;gap:6px;flex-wrap:wrap">${companies.map((c,i)=>`<span class="tag">${c} ${pastRoles[i]?'· '+pastRoles[i]:''}</span>`).join('')}</div></div>`:''}
+      ${projects.length?`<div><div class="slabel" style="margin-bottom:5px">Projects</div>${projects.map(p=>{const proj=typeof p==='string'?{name:p}:p; return `<div style="font-size:12px;padding:3px 0;color:var(--text2)"><strong>${proj.name||''}</strong>${proj.description?' — '+proj.description:''}</div>`}).join('')}</div>`:''}
+      ${r.summary?`<div style="font-size:12px;color:var(--text2);line-height:1.6;border-top:.5px solid var(--border);padding-top:8px">${r.summary}</div>`:''}
+    </div>`;
+}
+
+// ── Memory view ────────────────────────────────────────────────────────────────
+async function loadMemoryView() {
+  const data = await api('/api/memory');
+  if (!data) return;
+  const el = document.getElementById('memory-content');
+  const ctx = data.context;
+  const qs = data.question_stats;
+  el.innerHTML = `
+    <div class="mrow" style="margin-bottom:10px">
+      <div class="mc"><div class="mv">${ctx.streak_days||0}</div><div class="ms">Day streak</div></div>
+      <div class="mc"><div class="mv">${qs.passed||0}</div><div class="ms">Verified Qs</div></div>
+      <div class="mc"><div class="mv">${qs.failed||0}</div><div class="ms">Rejected Qs</div></div>
+      <div class="mc"><div class="mv">${ctx.recent_sessions?.length||0}</div><div class="ms">Sessions</div></div>
+    </div>
+
+    ${ctx.weak_areas?.length ? `
+    <div class="slabel">Tracked weak areas</div>
+    <div class="tags" style="margin-bottom:10px">
+      ${ctx.weak_areas.map(w=>`<span class="tag tag-r">${w}</span>`).join('')}
+    </div>` : ''}
+
+    ${ctx.today_tasks?.length ? `
+    <div class="slabel">Today's tasks</div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-body">
+        ${ctx.today_tasks.map(t=>`
+          <div class="trow">
+            <div class="tdot ${t.done?'tdot-done':'tdot-todo'}" style="cursor:pointer" onclick="completeTask(${t.id})"></div>
+            <div class="tt ${t.done?'tt-done':''}">${t.task}</div>
+            <div class="te">${t.duration||''}</div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${ctx.recent_sessions?.length ? `
+    <div class="slabel">Recent agent sessions</div>
+    <div class="card">
+      <div class="card-body" style="padding:.5rem 1rem">
+        ${ctx.recent_sessions.map(s=>`
+          <div class="srow">
+            <span class="stime">${s.date||''}</span>
+            <span style="font-size:12px;flex:1">${s.goal||''}</span>
+            <span class="tag ${s.outcome==='success'?'tag-g':''}">${s.outcome||'—'}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${Object.keys(ctx.user||{}).length ? `
+    <div class="slabel" style="margin-top:10px">Learned about you</div>
+    <div class="card">
+      <div class="card-body" style="padding:.5rem 1rem">
+        ${Object.entries(ctx.user).map(([k,v])=>`
+          <div class="srow">
+            <span class="stime" style="width:140px;font-size:10px;color:var(--text3)">${k}</span>
+            <span style="font-size:12px;flex:1;color:var(--text)">${v}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}`;
+}
+
+async function completeTask(id) {
+  await api(`/api/memory/task/${id}/complete`,'POST',{});
+  idle(loadMemoryView);
+}
+
+async function clearMemory() {
+  if (!confirm('Clear all agent memory? This cannot be undone.')) return;
+  await api('/api/memory/clear','POST',{});
+  idle(loadMemoryView);
+}
+
+
+// ── Question Bank ─────────────────────────────────────────────────────────────
+
+async function loadQuestionBank() {
+  const role    = (document.getElementById('qb-role')||{}).value || '';
+  const verdict = (document.getElementById('qb-verdict')||{}).value || 'pass';
+  const list    = document.getElementById('qb-list');
+  if (!list) return;
+  list.innerHTML = '<div class="empty"><span class="spinner"></span>&nbsp;Loading...</div>';
+  const params = new URLSearchParams({verdict});
+  if (role) params.set('role', role);
+  const data = await api('/api/memory/questions?' + params);
+  if (!data) return;
+  const qs = data.questions || [];
+  if (!qs.length) {
+    list.innerHTML = '<div class="empty">No ' + verdict + ' questions yet. Generate some above.</div>';
+    return;
+  }
+  const vc = {pass:'tag-g', fail:'tag-r', flagged:'tag-a'};
+  const cc = {'system-design':'tag-b', technical:'', behavioural:'tag-p', coding:'tag-a'};
+  list.innerHTML = qs.map((q,i) => `
+    <div class="card" style="margin-bottom:7px;animation:screen-in var(--slow) var(--eout) ${i*40}ms both">
+      <div class="card-body" style="display:flex;flex-direction:column;gap:7px">
+        <div style="font-size:13px;line-height:1.6">${q.question}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="tag ${vc[q.verdict]||''}">${q.verdict}</span>
+          <span class="tag ${cc[q.category]||''}">${q.category||'technical'}</span>
+          ${q.role?`<span class="tag" style="font-size:9px">${q.role}</span>`:''}
+          <span style="font-size:10px;color:var(--text3);margin-left:auto">${q.confidence?Math.round(q.confidence*100)+'% confidence':''}</span>
+          ${verdict==='pass'?`<button class="btn btn-sm" style="padding:2px 8px" onclick="practiceQuestion(${q.id},this)">${q.practiced?'✓ Practiced':'Practice'}</button>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function practiceQuestion(id, btn) {
+  await api('/api/questions/practice/' + id, 'POST', {});
+  btn.textContent = '✓ Practiced';
+  btn.style.color = 'var(--teal-text)';
+}
+
+async function generateAndJudge() {
+  const role    = (document.getElementById('qb-gen-role')||{}).value || 'Software Engineer';
+  const company = (document.getElementById('qb-gen-company')||{}).value || '';
+  const cat     = (document.getElementById('qb-gen-cat')||{}).value || 'technical';
+  const count   = parseInt((document.getElementById('qb-gen-count')||{}).value || '5');
+  const btn     = document.getElementById('qb-gen-btn');
+  const logEl   = document.getElementById('judge-log');
+  const tagEl   = document.getElementById('judge-status-tag');
+  if (!role) return;
+
+  logEl.style.display = 'flex';
+  logEl.innerHTML = '';
+  btn.disabled = true;
+  btn.textContent = '\u23F3 Judging...';
+  tagEl.textContent = 'Running...';
+  tagEl.className = 'tag tag-b';
+
+  appendJudgeLog('Generating ' + count + ' questions for ' + role + (company?' at '+company:'') + '...', 'info');
+
+  const data = await api('/api/questions/generate', 'POST', {role, company, category:cat, count});
+
+  if (!data || data.error) {
+    appendJudgeLog('Error: ' + (data?.error||'unknown'), 'fail');
+    btn.disabled = false; btn.textContent = 'Generate + Judge';
+    tagEl.textContent = 'Error'; tagEl.className = 'tag tag-r';
+    return;
+  }
+
+  const passed  = data.passed  || 0;
+  const failed  = data.failed  || 0;
+  const flagged = data.flagged || 0;
+  const total   = data.total_generated || (passed+failed+flagged);
+
+  appendJudgeLog('Generated ' + total + ' questions', 'info');
+  appendJudgeLog('\u2713 Passed judge: ' + passed, 'pass');
+  if (failed)  appendJudgeLog('\u2717 Rejected: ' + failed  + ' (hallucination/filler detected)', 'fail');
+  if (flagged) appendJudgeLog('\u26A0 Flagged:  ' + flagged + ' (borderline)', 'judging');
+
+  (data.questions||[]).forEach(q => {
+    appendJudgeLog('\u2713 ' + (q.question||'').slice(0,90) + ((q.question||'').length>90?'\u2026':''), 'pass');
+  });
+
+  tagEl.textContent = passed + '/' + total + ' passed';
+  tagEl.className   = 'tag ' + (passed>0?'tag-g':'tag-r');
+  btn.disabled      = false;
+  btn.textContent   = 'Generate + Judge';
+  idle(loadQuestionBank);
+}
+
+function appendJudgeLog(text, type) {
+  const el = document.getElementById('judge-log');
+  if (!el) return;
+  const colors = {pass:'var(--teal-text)',fail:'var(--red-text)',info:'var(--text2)',judging:'var(--amber-text)'};
+  const div = document.createElement('div');
+  div.style.cssText = 'font-size:11px;padding:4px 8px;border-radius:var(--r);background:var(--bg3);color:'+
+    (colors[type]||'var(--text2)')+';animation:screen-in var(--mid) var(--eout) both;border:.5px solid var(--border)';
+  div.textContent = text;
+  el.appendChild(div);
+  div.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+requestAnimationFrame(()=>{
+  idle(loadDashboard);
+  idle(loadFocus);
+  idle(restoreMode);
+});
+setInterval(()=>idle(async()=>{const d=await api('/api/dashboard');if(d)updateBell(d.unread_notifications);}),45000);
+
+// Keyboard: Escape closes modal
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeKeyEditor();});
+// Enter in modal saves
+document.getElementById('ked-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveKeyFromEditor();});
+</script>
+</body>
+</html>

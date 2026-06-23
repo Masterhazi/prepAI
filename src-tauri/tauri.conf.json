@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "PrepAI",
+  "version": "2.0.0",
+  "identifier": "com.prepai.app",
+  "build": {
+    "frontendDist": "../ui-dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "PrepAI",
+        "url": "loading.html",
+        "width": 1100,
+        "height": 720,
+        "minWidth": 860,
+        "minHeight": 580,
+        "resizable": true,
+        "center": true,
+        "visible": false,
+        "backgroundColor": "#1c1c1a",
+        "shadow": true
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": false
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "app", "dmg", "deb", "appimage"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/prepai-backend"
+    ],
+    "resources": [],
+    "shortDescription": "AI-powered interview prep co-pilot",
+    "longDescription": "PrepAI scans job boards, builds personalised prep plans, and keeps you on track for your next interview using Claude, Gemini, and Groq.",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["English"]
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.14"
+    }
+  }
+}
