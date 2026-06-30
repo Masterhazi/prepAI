@@ -1,128 +1,465 @@
-# PrepAI — Stage 5: Tauri Migration
+# 🚀 PrepAI
 
-## What changed from the Flask + WebView2 version
+<p align="center">
+  <img src="assets/demo.gif" alt="PrepAI Demo" width="100%">
+</p>
 
-```
-BEFORE (Stage 1-4)              AFTER (Stage 5)
-──────────────────              ───────────────
-launcher.py (Python)            main.rs (Rust, ~150 lines)
-  └── pywebview window            └── native OS window
-  └── pystray tray icon           └── native tray (tauri-plugin)
-  └── spawns Flask in-process     └── spawns Flask as sidecar binary
-  └── plyer notifications         └── native notifications (tauri-plugin)
+<p align="center">
+  <h3 align="center">🧠 Your Personal AI Operating System for Interview Success</h3>
+</p>
 
-Bundle size:  ~60MB              Bundle size:  ~15-20MB (sidecar dominates)
-RAM at idle:  ~120MB              RAM at idle:  ~50-60MB
-Startup:      ~2-3s               Startup:      ~0.8-1.2s
-```
+<p align="center">
+  Resume → Memory → Planning → Practice → Interviews → Offer Letter
+</p>
 
-The Flask backend (`app.py` + `core/*`) is **completely unchanged** — same
-39 routes, same agent, same memory, same judge, same 3-engine AI router.
-Only the shell around it changed.
+<p align="center">
 
----
+![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge\&logo=python)
+![Tauri](https://img.shields.io/badge/Tauri-Desktop_App-orange?style=for-the-badge\&logo=tauri)
+![Flask](https://img.shields.io/badge/Flask-Backend-black?style=for-the-badge\&logo=flask)
+![Claude](https://img.shields.io/badge/Claude-AI-teal?style=for-the-badge)
+![Gemini](https://img.shields.io/badge/Gemini-AI-blue?style=for-the-badge)
+![Groq](https://img.shields.io/badge/Groq-Ultra_Fast-orange?style=for-the-badge)
 
-## Architecture
+</p>
 
-```
-PrepAI.exe (Tauri/Rust — tiny, ~3-5MB)
-    │
-    ├── Opens native OS window (WebView2 on Win, WKWebView on Mac, WebKitGTK on Linux)
-    │     └── Loads http://127.0.0.1:5000 once the sidecar is ready
-    │     └── Shows loading.html in the meantime (no white flash)
-    │
-    ├── Spawns prepai-backend (PyInstaller binary, ~70-85MB, bundled inside)
-    │     └── This is backend_entry.py → imports app.py → Flask runs on :5000
-    │     └── Prints "PREPAI_BACKEND_READY" — Rust watches for this
-    │
-    └── Native system tray (no Python pystray needed)
-          └── Open PrepAI / Quit PrepAI
-```
+<p align="center">
+
+<a href="#-why-prepai">Why PrepAI?</a> • <a href="#-features">Features</a> • <a href="#-choose-your-journey">Choose Your Journey</a> • <a href="#-architecture">Architecture</a> • <a href="#-installation">Installation</a> • <a href="#-roadmap">Roadmap</a>
+
+</p>
 
 ---
 
-## What was verified in this sandbox (and how)
+# 🎯 Why PrepAI?
 
-| Component | Verified | Method |
-|---|---|---|
-| Rust shell syntax | ✅ | `rustc --edition 2021 --crate-type lib main.rs` — zero syntax errors |
-| Tauri config (`tauri.conf.json`) | ✅ | Valid JSON, matches Tauri v2 schema |
-| Capabilities/permissions | ✅ | Valid JSON, sidecar + shell + notification scoped correctly |
-| Python sidecar imports | ✅ | `backend_entry.py` → `app.py` → all 39 routes load cleanly |
-| Sidecar boots & responds | ✅ | Ran the **compiled PyInstaller binary** directly, confirmed `GET /api/dashboard` → `200 OK` in ~1.5s |
-| `PREPAI_BACKEND_READY` signal | ✅ | Confirmed printed to stdout exactly as Rust's reader expects |
-| GitHub Actions workflow | ✅ | YAML parses correctly, job graph validated |
-| Full Rust→exe compile | ⚠️ Not possible here | Sandbox's system Rust (1.75, Dec 2023) is too old for a transitive dependency requiring `edition2024`. **This is a sandbox limitation, not a code issue** — GitHub Actions runners use current stable Rust and will compile cleanly. |
+Most interview platforms stop at giving you questions.
 
-The one thing I could **not** do in this environment is produce the final
-compiled `.exe` — that genuinely requires either a real Windows machine or
-a CI runner with current Rust. Everything code-level is written, syntax
-checked, and the sidecar mechanism is proven end-to-end.
+**PrepAI goes further.**
+
+It remembers your strengths, identifies your weaknesses, plans your preparation, generates verified interview questions, tracks progress, and adapts as you improve.
+
+> **PrepAI doesn't just answer questions.**
+>
+> It remembers.
+>
+> It plans.
+>
+> It coaches.
+>
+> It evolves with you.
 
 ---
 
-## How to get your actual .exe
+# ⚡ Features
 
-### Option A — GitHub Actions (recommended, zero local setup)
+<table>
+<tr>
+<td width="50%">
 
-1. Push this folder to a GitHub repo
-2. The workflow at `.github/workflows/build.yml` runs automatically on push
-3. It builds the Python sidecar AND the Tauri shell on real Windows/Mac/Linux runners
-4. Download the finished installer from the Actions tab → Artifacts
-5. Tag a release (`git tag v2.0.0 && git push --tags`) to also get an automatic GitHub Release with all platforms attached
+## 🧠 Persistent Memory
 
-### Option B — Build locally on Windows
+PrepAI continuously learns from:
+
+* Resume uploads
+* Practice sessions
+* Weak areas
+* Coding history
+* Progress over time
+
+The more you use PrepAI, the smarter it becomes.
+
+</td>
+
+<td width="50%">
+
+## 🤖 Autonomous Agent
+
+Set a goal such as:
+
+> *"Get me ready for a Google SWE interview in 14 days."*
+
+PrepAI automatically:
+
+* Plans
+* Prioritizes
+* Searches
+* Recommends
+* Tracks progress
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+## 📄 Resume Intelligence
+
+Upload your resume and PrepAI extracts:
+
+* Skills
+* Projects
+* Experience
+* Weaknesses
+* Career focus
+
+</td>
+
+<td>
+
+## 🧪 AI Question Judge
+
+Questions are not blindly accepted.
+
+Each question is:
+
+```text
+Generate
+    ↓
+Judge
+    ↓
+Validate
+    ↓
+Store
+```
+
+Cross-model validation reduces hallucinations.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+## 📅 Adaptive Preparation Timeline
+
+Generate personalized roadmaps based on:
+
+* Interview date
+* Role
+* Current skill level
+* Experience
+
+</td>
+
+<td>
+
+## 🔍 AI Job Scanner
+
+Discover relevant opportunities using:
+
+* Google Search Grounding
+* Skill matching
+* Resume-aware recommendations
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+## 💻 Coding Practice Assistant
+
+Integrated support for:
+
+* LeetCode tracking
+* Weak topic detection
+* Daily coding queues
+
+</td>
+
+<td>
+
+## 🔔 Smart Notifications
+
+Never miss:
+
+* Daily preparation reminders
+* Interview countdowns
+* Job deadlines
+* Coding sessions
+
+</td>
+</tr>
+
+</table>
+
+---
+
+# 🎬 Demo
+
+<p align="center">
+  <img src="ui\static\mockup.png" width="90%">
+</p>
+
+---
+
+# 🎯 Choose Your Journey
+
+## 📄 I already have a Resume
+
+<details>
+<summary><b>Click to expand</b></summary>
+
+```text
+Upload Resume
+        ↓
+Skill Extraction
+        ↓
+Weakness Detection
+        ↓
+Preparation Timeline
+        ↓
+Question Practice
+        ↓
+Interview Ready 🚀
+```
+
+</details>
+
+---
+
+## 💼 I'm actively applying for jobs
+
+<details>
+<summary><b>Click to expand</b></summary>
+
+```text
+Scan Jobs
+      ↓
+Match Skills
+      ↓
+Generate Projects
+      ↓
+Fill Skill Gaps
+      ↓
+Track Applications
+      ↓
+Land Interviews 🚀
+```
+
+</details>
+
+---
+
+## 🎯 I have an interview soon
+
+<details>
+<summary><b>Click to expand</b></summary>
+
+```text
+Set Interview Date
+          ↓
+Generate Timeline
+          ↓
+Practice Questions
+          ↓
+Mock Preparation
+          ↓
+Daily Focus
+          ↓
+Crack the Interview 🚀
+```
+
+</details>
+
+---
+
+## 🤖 I want PrepAI to do everything
+
+<details>
+<summary><b>Click to expand</b></summary>
+
+```text
+Set Goal
+    ↓
+Agent Plans
+    ↓
+Agent Executes
+    ↓
+Daily Coaching
+    ↓
+Progress Tracking
+    ↓
+Continuous Improvement 🚀
+```
+
+</details>
+
+---
+
+# 🏗️ Architecture
+
+```text
+                        ┌────────────────────┐
+                        │       User         │
+                        └─────────┬──────────┘
+                                  │
+                                  ▼
+                   ┌─────────────────────────┐
+                   │      PrepAI Desktop     │
+                   │     (Tauri + HTML)      │
+                   └─────────┬───────────────┘
+                             │
+                             ▼
+                  ┌──────────────────────────┐
+                  │      Flask Backend       │
+                  └─────────┬────────────────┘
+                            │
+         ┌──────────────────┼──────────────────┐
+         ▼                  ▼                  ▼
+
+   Claude AI          Gemini AI          Groq AI
+
+         └──────────────────┼──────────────────┘
+                            ▼
+
+                  ┌──────────────────────────┐
+                  │   Persistent Memory DB   │
+                  └──────────────────────────┘
+```
+
+---
+
+# 🛠️ Tech Stack
+
+| Layer         | Technologies          |
+| ------------- | --------------------- |
+| Desktop       | Tauri                 |
+| Backend       | Flask                 |
+| Frontend      | HTML, CSS, JavaScript |
+| AI Models     | Claude, Gemini, Groq  |
+| Database      | SQLite                |
+| Notifications | OneSignal             |
+| Packaging     | GitHub Actions + MSI  |
+
+---
+
+# 🚀 Installation
+
+## Clone the repository
 
 ```bash
-# One-time setup
-# 1. Install Rust: https://rustup.rs
-# 2. Install Node.js 18+: https://nodejs.org
-# 3. Install Tauri prerequisites: https://v2.tauri.app/start/prerequisites/
-#    (Visual Studio C++ Build Tools — WebView2 is preinstalled on Win 11)
-
-cd prepai-tauri
-./build_tauri.sh
+git clone https://github.com/yourusername/prepai.git
+cd prepai
 ```
 
-Output lands in `src-tauri/target/release/bundle/nsis/PrepAI_2.0.0_x64-setup.exe`
+## Create environment
 
-### Option C — Build locally on Mac/Linux
+```bash
+python -m venv venv
+```
 
-Same `./build_tauri.sh` script — it auto-detects your platform and target triple.
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+### Linux / macOS
+
+```bash
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Install frontend dependencies:
+
+```bash
+npm install
+```
+
+Run:
+
+```bash
+python app.py
+```
+
+Desktop development:
+
+```bash
+npm run tauri dev
+```
+
+Build MSI:
+
+```bash
+npm run tauri build
+```
 
 ---
 
-## File map
+# 🧠 AI Engine Strategy
 
+PrepAI intelligently routes requests across multiple providers.
+
+```text
+Claude → Deep reasoning
+Gemini → Search grounding
+Groq → Ultra-fast inference
 ```
-prepai-tauri/
-├── backend_entry.py          # Sidecar entry point (imports app.py, starts Flask)
-├── prepai-backend.spec       # PyInstaller spec — builds the sidecar binary
-├── app.py                    # Unchanged Flask app (39 routes)
-├── core/                     # Unchanged — vault, ai_router, agent, memory, judge, etc.
-├── ui/templates/index.html   # Unchanged frontend
-├── package.json              # Tauri CLI dependency
-├── build_tauri.sh            # One-command local build (any OS)
-├── ui-dist/
-│   └── loading.html          # Shown while sidecar boots
-└── src-tauri/
-    ├── Cargo.toml            # Rust dependencies
-    ├── build.rs               # Tauri build hook
-    ├── tauri.conf.json        # Window, bundle, sidecar config
-    ├── capabilities/main.json # Permissions (shell sidecar, notifications)
-    ├── icons/                 # App icons (generate full set via `npx tauri icon`)
-    ├── binaries/               # Sidecar binaries land here before build (gitignored)
-    └── src/main.rs             # The Rust shell (~150 lines)
+
+Auto Mode:
+
+```text
+Claude
+   ↓
+Fallback to Gemini
+   ↓
+Fallback to Groq
 ```
 
 ---
 
-## What main.rs actually does (plain English)
+# 🗺️ Roadmap
 
-1. On startup, checks if another PrepAI instance is already running — if so, just focuses that window instead of opening a duplicate.
-2. Spawns the `prepai-backend` sidecar binary as a child process.
-3. Streams the sidecar's stdout/stderr into the Rust console for debugging.
-4. Polls `http://127.0.0.1:5000` every 250ms until it responds (max 20s), then swaps the loading screen for the real app.
-5. Builds a system tray icon with "Open PrepAI" and "Quit PrepAI".
-6. When the window's X button is clicked, hides it instead of closing (same behavior as the WebView2 version — keeps notifications running).
-7. On actual quit, kills the sidecar process so it doesn't linger.
+* [x] Resume Intelligence
+* [x] Persistent Memory
+* [x] AI Question Judge
+* [x] Adaptive Timelines
+* [x] Autonomous Agent
+* [x] Desktop Packaging
+* [x] Notification Engine
+* [ ] Voice Mock Interviews
+* [ ] Local LLM Support
+* [ ] Multi-Agent Collaboration
+* [ ] Browser Extension
+* [ ] Interview Copilot Mode
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+Feel free to:
+
+* Open issues
+* Submit pull requests
+* Suggest features
+* Report bugs
+
+---
+
+# ⭐ Support
+
+If you find PrepAI useful, consider giving this repository a star.
+
+It helps the project grow and motivates further development.
+
+<p align="center">
+
+⭐ **Star the repository if PrepAI helped you prepare better.** ⭐
+
+</p>
+
+---
+
+<p align="center">
+Made with ❤️ for every candidate chasing their dream job.
+</p>
