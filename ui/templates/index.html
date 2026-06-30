@@ -1618,7 +1618,7 @@ async function generateAndJudge() {
   appendJudgeLog('Generated ' + total + ' questions', 'info');
   appendJudgeLog('\u2713 Passed judge: ' + passed, 'pass');
   if (failed)  appendJudgeLog('\u2717 Rejected: ' + failed  + ' (hallucination/filler detected)', 'fail');
-  if (flagged) appendJudgeLog('\u26A0 Flagged:  ' + flagged + ' (borderline)', 'judging');
+  if (flagged) appendJudgeLog('\u26A0 Flagged:  ' + flagged + ' (needs review or judge unavailable)', 'judging');
 
   (data.questions||[]).forEach(q => {
     appendJudgeLog('\u2713 ' + (q.question||'').slice(0,90) + ((q.question||'').length>90?'\u2026':''), 'pass');

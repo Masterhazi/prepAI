@@ -130,9 +130,42 @@ def judge_question(question: str, role: str, company: str,
                 "criteria":criteria,"avg_score":round(avg,1),
                 "judge_engine":judge_engine,"skipped_ai":False}
     except Exception as e:
-        return {"verdict":"fail","confidence":0.0,
-                "reason":f"Judge error (strict → fail): {e}",
-                "criteria":{},"judge_engine":judge_engine,"skipped_ai":False}
+        msg = str(e).lower()
+
+        quota_errors = [
+            "resource_exhausted",
+            "quota",
+            "429",
+            "rate limit",
+            "exceeded your current quota"
+        ]
+
+        # Judge unavailable → fallback to heuristics only
+        if any(x in msg for x in quota_errors):
+
+            return {
+                "verdict": "flagged",
+                "confidence": 0.45,
+                "reason":
+                    f"Cross-model judge unavailable "
+                    f"(quota exhausted on {judge_engine}). "
+                    f"Passed heuristic checks only.",
+                "criteria": {},
+                "judge_engine": "heuristic-only",
+                "skipped_ai": True
+            }
+
+        # Any other unexpected error
+        return {
+            "verdict": "flagged",
+            "confidence": 0.35,
+            "reason":
+                f"Judge failed unexpectedly ({judge_engine}). "
+                f"Question saved for manual review.",
+            "criteria": {},
+            "judge_engine": "heuristic-only",
+            "skipped_ai": True
+        }
 
 
 def judge_questions_batch(questions: list[dict], role: str, company: str,
